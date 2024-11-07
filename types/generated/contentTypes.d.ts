@@ -369,6 +369,63 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiPaymentPayment extends Struct.CollectionTypeSchema {
+  collectionName: 'payments';
+  info: {
+    description: 'P\u0142atno\u015Bci u\u017Cytkownik\u00F3w';
+    displayName: 'Payment';
+    pluralName: 'payments';
+    singularName: 'payment';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    currency: Schema.Attribute.Enumeration<['PLN', 'EUR', 'USD']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PLN'>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::payment.payment'
+    > &
+      Schema.Attribute.Private;
+    paymentType: Schema.Attribute.Enumeration<['one_time', 'subscription']> &
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<
+      ['pending', 'completed', 'failed', 'refunded']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'pending'>;
+    stripePaymentIntentId: Schema.Attribute.String;
+    stripeSessionId: Schema.Attribute.String;
+    subscriptionPlan: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::subscription-plan.subscription-plan'
+    >;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    user: Schema.Attribute.Relation<
+      'manyToOne',
+      'plugin::users-permissions.user'
+    > &
+      Schema.Attribute.Required;
+  };
+}
+
 export interface ApiSubscriptionHistorySubscriptionHistory
   extends Struct.CollectionTypeSchema {
   collectionName: 'subscription_histories';
@@ -431,11 +488,21 @@ export interface ApiSubscriptionPlanSubscriptionPlan
   options: {
     draftAndPublish: true;
   };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    description: Schema.Attribute.Text;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     features: Schema.Attribute.Component<'subscription.features', true> &
       Schema.Attribute.Required;
     isActive: Schema.Attribute.Boolean &
@@ -444,15 +511,19 @@ export interface ApiSubscriptionPlanSubscriptionPlan
     level: Schema.Attribute.Enumeration<['basic', 'premium', 'premium_plus']> &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::subscription-plan.subscription-plan'
-    > &
-      Schema.Attribute.Private;
+    >;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
-      Schema.Attribute.Unique;
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    payments: Schema.Attribute.Relation<'oneToMany', 'api::payment.payment'>;
     prices: Schema.Attribute.Component<'subscription.price-options', true> &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -926,7 +997,7 @@ export interface PluginUsersPermissionsUser
     draftAndPublish: false;
   };
   attributes: {
-    address: Schema.Attribute.Component<'user.address', false>;
+    billingAddress: Schema.Attribute.Component<'user.address', false>;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     company: Schema.Attribute.Component<'user.company', false>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -954,6 +1025,7 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
+    shippingAddress: Schema.Attribute.Component<'user.address', false>;
     subscription: Schema.Attribute.Component<
       'subscription.user-subscription',
       false
@@ -977,6 +1049,7 @@ declare module '@strapi/strapi' {
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
+      'api::payment.payment': ApiPaymentPayment;
       'api::subscription-history.subscription-history': ApiSubscriptionHistorySubscriptionHistory;
       'api::subscription-plan.subscription-plan': ApiSubscriptionPlanSubscriptionPlan;
       'plugin::content-releases.release': PluginContentReleasesRelease;

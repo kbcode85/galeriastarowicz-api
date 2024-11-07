@@ -2,13 +2,20 @@
 	"collectionName": "components_user_addresses",
 	"info": {
 		"displayName": "Address",
-		"description": "Adres użytkownika"
+		"description": "Szczegółowe dane adresowe"
 	},
 	"options": {},
 	"attributes": {
 		"street": {
 			"type": "string",
 			"required": true
+		},
+		"buildingNumber": {
+			"type": "string",
+			"required": true
+		},
+		"apartmentNumber": {
+			"type": "string"
 		},
 		"city": {
 			"type": "string",
@@ -18,9 +25,36 @@
 			"type": "string",
 			"required": true
 		},
+		"voivodeship": {
+			"type": "enumeration",
+			"enum": [
+				"dolnoslaskie",
+				"kujawsko_pomorskie",
+				"lubelskie",
+				"lubuskie",
+				"lodzkie",
+				"malopolskie",
+				"mazowieckie",
+				"opolskie",
+				"podkarpackie",
+				"podlaskie",
+				"pomorskie",
+				"slaskie",
+				"swietokrzyskie",
+				"warminsko_mazurskie",
+				"wielkopolskie",
+				"zachodniopomorskie"
+			],
+			"required": true
+		},
 		"country": {
 			"type": "string",
+			"default": "Polska",
 			"required": true
+		},
+		"additionalInfo": {
+			"type": "text",
+			"description": "Dodatkowe informacje dotyczące adresu (np. piętro, kod do domofonu)"
 		}
 	}
 }

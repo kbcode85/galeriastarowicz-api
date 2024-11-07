@@ -7,11 +7,22 @@ export interface SubscriptionFeatures extends Struct.ComponentSchema {
     displayName: 'Plan Features';
   };
   attributes: {
-    description: Schema.Attribute.Text;
+    description: Schema.Attribute.Text &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     isEnabled: Schema.Attribute.Boolean &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<true>;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     type: Schema.Attribute.Enumeration<
       ['view_prices', 'buy_products', 'participate_auctions', 'auto_bidding']
     > &
@@ -26,10 +37,19 @@ export interface SubscriptionPriceOptions extends Struct.ComponentSchema {
     displayName: 'Price Options';
   };
   attributes: {
+    currency: Schema.Attribute.Enumeration<['PLN', 'EUR', 'USD']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'PLN'>;
     duration: Schema.Attribute.Enumeration<['monthly', 'yearly']> &
       Schema.Attribute.Required;
     isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
-    name: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
     price: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
@@ -45,7 +65,10 @@ export interface SubscriptionPriceOptions extends Struct.ComponentSchema {
         },
         number
       >;
+    promotionalPriceStripeId: Schema.Attribute.String &
+      Schema.Attribute.Private;
     promotionValidUntil: Schema.Attribute.DateTime;
+    stripePriceId: Schema.Attribute.String & Schema.Attribute.Private;
     type: Schema.Attribute.Enumeration<['one_time', 'subscription']> &
       Schema.Attribute.Required;
   };
@@ -72,14 +95,40 @@ export interface SubscriptionUserSubscription extends Struct.ComponentSchema {
 export interface UserAddress extends Struct.ComponentSchema {
   collectionName: 'components_user_addresses';
   info: {
-    description: 'Adres u\u017Cytkownika';
+    description: 'Szczeg\u00F3\u0142owe dane adresowe';
     displayName: 'Address';
   };
   attributes: {
+    additionalInfo: Schema.Attribute.Text;
+    apartmentNumber: Schema.Attribute.String;
+    buildingNumber: Schema.Attribute.String & Schema.Attribute.Required;
     city: Schema.Attribute.String & Schema.Attribute.Required;
-    country: Schema.Attribute.String & Schema.Attribute.Required;
+    country: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Polska'>;
     postalCode: Schema.Attribute.String & Schema.Attribute.Required;
     street: Schema.Attribute.String & Schema.Attribute.Required;
+    voivodeship: Schema.Attribute.Enumeration<
+      [
+        'dolnoslaskie',
+        'kujawsko_pomorskie',
+        'lubelskie',
+        'lubuskie',
+        'lodzkie',
+        'malopolskie',
+        'mazowieckie',
+        'opolskie',
+        'podkarpackie',
+        'podlaskie',
+        'pomorskie',
+        'slaskie',
+        'swietokrzyskie',
+        'warminsko_mazurskie',
+        'wielkopolskie',
+        'zachodniopomorskie',
+      ]
+    > &
+      Schema.Attribute.Required;
   };
 }
 
