@@ -1,0 +1,59 @@
+{
+  "kind": "collectionType",
+  "collectionName": "subscription_histories",
+  "info": {
+    "singularName": "subscription-history",
+    "pluralName": "subscription-histories",
+    "displayName": "Subscription History",
+    "description": "Historia subskrypcji użytkowników"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "required": true
+    },
+    "plan": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::subscription-plan.subscription-plan",
+      "required": true
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "pricePaid": {
+      "type": "decimal",
+      "required": true
+    },
+    "wasPromotional": {
+      "type": "boolean",
+      "default": false
+    },
+    "paymentStatus": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending"
+    },
+    "canceledAt": {
+      "type": "datetime"
+    },
+    "cancelReason": {
+      "type": "text"
+    }
+  }
+} 

@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_subscription_user_subscriptions",
+  "info": {
+    "displayName": "User Subscription",
+    "description": "Aktywna subskrypcja użytkownika"
+  },
+  "options": {},
+  "attributes": {
+    "activePlan": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::subscription-plan.subscription-plan"
+    },
+    "startDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "endDate": {
+      "type": "datetime",
+      "required": true
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "autoRenew": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+} 
