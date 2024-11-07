@@ -1,0 +1,20 @@
+{
+	"collectionName": "components_user_companies",
+	"info": {
+		"displayName": "Company",
+		"description": "Informacje o firmie użytkownika"
+	},
+	"options": {},
+	"attributes": {
+		"name": {
+			"type": "string",
+			"required": true
+		},
+		"nip": {
+			"type": "string"
+		},
+		"regon": {
+			"type": "string"
+		}
+	}
+}

@@ -1,0 +1,26 @@
+{
+	"collectionName": "components_user_addresses",
+	"info": {
+		"displayName": "Address",
+		"description": "Adres użytkownika"
+	},
+	"options": {},
+	"attributes": {
+		"street": {
+			"type": "string",
+			"required": true
+		},
+		"city": {
+			"type": "string",
+			"required": true
+		},
+		"postalCode": {
+			"type": "string",
+			"required": true
+		},
+		"country": {
+			"type": "string",
+			"required": true
+		}
+	}
+}
