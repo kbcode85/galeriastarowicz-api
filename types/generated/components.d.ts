@@ -37,7 +37,7 @@ export interface SubscriptionPriceOptions extends Struct.ComponentSchema {
     displayName: 'Price Options';
   };
   attributes: {
-    currency: Schema.Attribute.Enumeration<['PLN', 'EUR', 'USD']> &
+    currency: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'PLN'>;
     duration: Schema.Attribute.Enumeration<['monthly', 'yearly']> &
@@ -65,10 +65,7 @@ export interface SubscriptionPriceOptions extends Struct.ComponentSchema {
         },
         number
       >;
-    promotionalPriceStripeId: Schema.Attribute.String &
-      Schema.Attribute.Private;
     promotionValidUntil: Schema.Attribute.DateTime;
-    stripePriceId: Schema.Attribute.String & Schema.Attribute.Private;
     type: Schema.Attribute.Enumeration<['one_time', 'subscription']> &
       Schema.Attribute.Required;
   };
@@ -95,7 +92,7 @@ export interface SubscriptionUserSubscription extends Struct.ComponentSchema {
 export interface UserAddress extends Struct.ComponentSchema {
   collectionName: 'components_user_addresses';
   info: {
-    description: 'Szczeg\u00F3\u0142owe dane adresowe';
+    description: 'User address component';
     displayName: 'Address';
   };
   attributes: {
@@ -135,12 +132,12 @@ export interface UserAddress extends Struct.ComponentSchema {
 export interface UserCompany extends Struct.ComponentSchema {
   collectionName: 'components_user_companies';
   info: {
-    description: 'Informacje o firmie u\u017Cytkownika';
+    description: 'Company information';
     displayName: 'Company';
   };
   attributes: {
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    nip: Schema.Attribute.String;
+    nip: Schema.Attribute.String & Schema.Attribute.Required;
     regon: Schema.Attribute.String;
   };
 }

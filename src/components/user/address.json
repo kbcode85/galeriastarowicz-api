@@ -2,7 +2,7 @@
 	"collectionName": "components_user_addresses",
 	"info": {
 		"displayName": "Address",
-		"description": "Szczegółowe dane adresowe"
+		"description": "User address component"
 	},
 	"options": {},
 	"attributes": {
@@ -53,8 +53,7 @@
 			"required": true
 		},
 		"additionalInfo": {
-			"type": "text",
-			"description": "Dodatkowe informacje dotyczące adresu (np. piętro, kod do domofonu)"
+			"type": "text"
 		}
 	}
 }

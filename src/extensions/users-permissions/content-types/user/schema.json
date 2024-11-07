@@ -14,36 +14,49 @@
   "attributes": {
     "username": {
       "type": "string",
+      "minLength": 3,
       "unique": true,
+      "configurable": false,
       "required": true
     },
     "email": {
       "type": "email",
-      "unique": true,
+      "minLength": 6,
+      "configurable": false,
       "required": true
     },
     "provider": {
-      "type": "string"
+      "type": "string",
+      "configurable": false
     },
     "password": {
       "type": "password",
-      "private": true
+      "minLength": 6,
+      "configurable": false,
+      "private": true,
+      "searchable": false
     },
     "resetPasswordToken": {
       "type": "string",
-      "private": true
+      "configurable": false,
+      "private": true,
+      "searchable": false
     },
     "confirmationToken": {
       "type": "string",
-      "private": true
+      "configurable": false,
+      "private": true,
+      "searchable": false
     },
     "confirmed": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "configurable": false
     },
     "blocked": {
       "type": "boolean",
-      "default": false
+      "default": false,
+      "configurable": false
     },
     "role": {
       "type": "relation",
@@ -53,33 +66,29 @@
       "configurable": false
     },
     "firstName": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     "lastName": {
-      "type": "string"  
+      "type": "string",
+      "required": true
     },
     "phone": {
       "type": "string"
     },
     "company": {
       "type": "component",
-      "component": "user.company",
-      "repeatable": false
+      "component": "user.company"
     },
     "billingAddress": {
-      "type": "component", 
+      "type": "component",
       "component": "user.address",
-      "repeatable": false
+      "required": true
     },
     "shippingAddress": {
-      "type": "component", 
-      "component": "user.address",
-      "repeatable": false
-    },
-    "subscription": {
       "type": "component",
-      "component": "subscription.user-subscription",
-      "repeatable": false
+      "component": "user.address",
+      "required": true
     }
   }
 } 

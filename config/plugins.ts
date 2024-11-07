@@ -1,5 +1,5 @@
 export default ({ env }) => ({
-	'email': {
+	email: {
 		config: {
 			provider: 'nodemailer',
 			providerOptions: {
@@ -9,7 +9,6 @@ export default ({ env }) => ({
 					user: process.env.SMTP_USERNAME,
 					pass: process.env.SMTP_PASSWORD,
 				},
-				secure: true,
 			},
 			settings: {
 				defaultFrom: 'admin@galeriastarowicz.pl',
@@ -23,16 +22,26 @@ export default ({ env }) => ({
 				expiresIn: '7d',
 			},
 			register: {
-				allowedFields: ['username', 'email', 'password', 'firstName', 'lastName', 'phone', 'company', 'address'],
+				allowedFields: [
+					'username',
+					'email',
+					'password',
+					'firstName',
+					'lastName',
+					'phone',
+					'company',
+					'billingAddress',
+					'shippingAddress',
+				],
 			},
 		},
 	},
-	'i18n': {
+	i18n: {
 		enabled: true,
 		config: {
 			locales: ['pl', 'en', 'de'],
 			defaultLocale: 'pl',
 			modes: ['query'],
-		}
-	}
+		},
+	},
 })

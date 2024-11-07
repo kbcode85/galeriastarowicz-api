@@ -2,11 +2,11 @@ export default {
   routes: [
     {
       method: 'POST',
-      path: '/auth/custom-register',
-      handler: 'custom.register',
+      path: '/orders/create-checkout',
+      handler: 'order.createCheckout',
       config: {
         auth: {
-          required: false
+          required: true
         }
       }
     }

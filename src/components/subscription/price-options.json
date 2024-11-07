@@ -37,26 +37,13 @@
       "min": 0
     },
     "currency": {
-      "type": "enumeration",
-      "enum": [
-        "PLN",
-        "EUR",
-        "USD"
-      ],
+      "type": "string",
       "required": true,
       "default": "PLN"
-    },
-    "stripePriceId": {
-      "type": "string",
-      "private": true
     },
     "promotionalPrice": {
       "type": "decimal",
       "min": 0
-    },
-    "promotionalPriceStripeId": {
-      "type": "string",
-      "private": true
     },
     "promotionValidUntil": {
       "type": "datetime"

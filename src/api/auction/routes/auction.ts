@@ -2,8 +2,8 @@ export default {
   routes: [
     {
       method: 'POST',
-      path: '/subscription-plans/create-defaults',
-      handler: 'subscription-plan.createDefaultPlans',
+      path: '/auctions/create-checkout',
+      handler: 'auction.createCheckout',
       config: {
         auth: {
           required: true

@@ -65,11 +65,11 @@
       "type": "integer",
       "default": 0
     },
-    "payments": {
+    "subscriptions": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::payment.payment",
-      "mappedBy": "subscriptionPlan"
+      "target": "api::subscription.subscription",
+      "mappedBy": "plan"
     }
   }
 } 

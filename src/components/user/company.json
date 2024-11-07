@@ -2,7 +2,7 @@
 	"collectionName": "components_user_companies",
 	"info": {
 		"displayName": "Company",
-		"description": "Informacje o firmie użytkownika"
+		"description": "Company information"
 	},
 	"options": {},
 	"attributes": {
@@ -11,7 +11,8 @@
 			"required": true
 		},
 		"nip": {
-			"type": "string"
+			"type": "string",
+			"required": true
 		},
 		"regon": {
 			"type": "string"
