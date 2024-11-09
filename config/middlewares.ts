@@ -1,18 +1,6 @@
 export default [
 	'strapi::errors',
-	{
-		name: 'strapi::security',
-		config: {
-			contentSecurityPolicy: {
-				useDefaults: true,
-				directives: {
-					'connect-src': ["'self'", 'https:'],
-					'img-src': ["'self'", 'data:', 'blob:'],
-					'media-src': ["'self'", 'data:', 'blob:'],
-				},
-			},
-		},
-	},
+	'strapi::security',
 	'strapi::cors',
 	'strapi::poweredBy',
 	'strapi::logger',
@@ -20,10 +8,9 @@ export default [
 	{
 		name: 'strapi::body',
 		config: {
-			jsonLimit: '10mb',
-			formLimit: '10mb',
-			textLimit: '10mb',
-			includeUnparsed: true
+			includeUnparsed: true,
+			patchKoa: true,
+			multipart: true,
 		},
 	},
 	'strapi::session',

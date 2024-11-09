@@ -1,84 +1,111 @@
 {
-  "kind": "collectionType",
-  "collectionName": "payment_histories",
-  "info": {
-    "singularName": "payment-history",
-    "pluralName": "payment-histories",
-    "displayName": "Payment History"
-  },
-  "options": {
-    "draftAndPublish": false
-  },
-  "attributes": {
-    "user": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "plugin::users-permissions.user",
-      "required": true
-    },
-    "amount": {
-      "type": "decimal",
-      "required": true
-    },
-    "currency": {
-      "type": "string",
-      "required": true
-    },
-    "type": {
-      "type": "enumeration",
-      "enum": [
-        "order",
-        "subscription",
-        "auction"
-      ],
-      "required": true
-    },
-    "method": {
-      "type": "enumeration",
-      "enum": [
-        "stripe",
-        "bank_transfer",
-        "cash_on_delivery"
-      ],
-      "required": true
-    },
-    "status": {
-      "type": "enumeration",
-      "enum": [
-        "pending",
-        "completed",
-        "failed",
-        "refunded",
-        "disputed"
-      ],
-      "default": "pending",
-      "required": true
-    },
-    "relatedId": {
-      "type": "integer",
-      "comment": "ID powiązanego rekordu (order/subscription/auction)"
-    },
-    "metadata": {
-      "type": "json"
-    },
-    "stripeSessionId": {
-      "type": "string",
-      "unique": true
-    },
-    "stripePaymentIntentId": {
-      "type": "string",
-      "unique": true
-    },
-    "stripeSubscriptionId": {
-      "type": "string"
-    },
-    "billingAddress": {
-      "type": "component",
-      "component": "user.address"
-    },
-    "shippingAddress": {
-      "type": "component",
-      "component": "user.address"
-    }
-  }
-} 
+	"kind": "collectionType",
+	"collectionName": "payment_histories",
+	"info": {
+		"singularName": "payment-history",
+		"pluralName": "payment-histories",
+		"displayName": "Payment History",
+		"description": "",
+		"displayField": "paymentId"
+	},
+	"options": {
+		"draftAndPublish": false
+	},
+	"attributes": {
+		"paymentId": {
+			"type": "string",
+			"required": true,
+			"unique": true,
+			"private": false,
+			"configurable": false
+		},
+		"user": {
+			"type": "relation",
+			"relation": "manyToOne",
+			"target": "plugin::users-permissions.user"
+		},
+		"amount": {
+			"type": "decimal",
+			"required": true
+		},
+		"currency": {
+			"type": "string",
+			"required": true
+		},
+		"type": {
+			"type": "enumeration",
+			"enum": [
+				"subscription",
+				"subscription_upgrade",
+				"subscription_renewal",
+				"order",
+				"auction"
+			],
+			"required": true
+		},
+		"method": {
+			"type": "enumeration",
+			"enum": [
+				"stripe",
+				"bank_transfer"
+			],
+			"required": true
+		},
+		"status": {
+			"type": "enumeration",
+			"enum": [
+				"pending",
+				"completed",
+				"failed",
+				"refunded",
+				"awaiting_confirmation"
+			],
+			"default": "pending",
+			"required": true
+		},
+		"bankTransferDetails": {
+			"type": "json",
+			"private": false
+		},
+		"subscription": {
+			"type": "relation",
+			"relation": "oneToOne",
+			"target": "api::subscription.subscription",
+			"inversedBy": "paymentHistory"
+		},
+		"previousSubscription": {
+			"type": "relation",
+			"relation": "oneToOne",
+			"target": "api::subscription.subscription"
+		},
+		"notificationsSent": {
+			"type": "json",
+			"private": true
+		},
+		"metadata": {
+			"type": "json",
+			"private": false,
+			"required": false
+		},
+		"stripeSessionId": {
+			"type": "string",
+			"unique": true
+		},
+		"stripePaymentIntentId": {
+			"type": "string",
+			"unique": true
+		},
+		"completedAt": {
+			"type": "datetime"
+		},
+		"cancelledAt": {
+			"type": "datetime"
+		},
+		"failedAt": {
+			"type": "datetime"
+		},
+		"refundedAt": {
+			"type": "datetime"
+		}
+	}
+}

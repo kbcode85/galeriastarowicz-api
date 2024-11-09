@@ -1,63 +1,73 @@
 {
-  "kind": "collectionType",
-  "collectionName": "subscriptions",
-  "info": {
-    "singularName": "subscription",
-    "pluralName": "subscriptions",
-    "displayName": "Subscription"
-  },
-  "options": {
-    "draftAndPublish": false
-  },
-  "attributes": {
-    "user": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "plugin::users-permissions.user",
-      "required": true
-    },
-    "plan": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::subscription-plan.subscription-plan"
-    },
-    "amount": {
-      "type": "decimal",
-      "required": true
-    },
-    "currency": {
-      "type": "string",
-      "required": true
-    },
-    "status": {
-      "type": "enumeration",
-      "enum": [
-        "pending",
-        "active",
-        "cancelled",
-        "expired",
-        "failed"
-      ],
-      "default": "pending",
-      "required": true
-    },
-    "stripeSessionId": {
-      "type": "string",
-      "unique": true
-    },
-    "stripeSubscriptionId": {
-      "type": "string",
-      "unique": true
-    },
-    "startDate": {
-      "type": "datetime"
-    },
-    "endDate": {
-      "type": "datetime"
-    },
-    "autoRenew": {
-      "type": "boolean",
-      "default": false
-    }
-  }
-} 
+	"kind": "collectionType",
+	"collectionName": "subscriptions",
+	"info": {
+		"singularName": "subscription",
+		"pluralName": "subscriptions",
+		"displayName": "Subscription",
+		"description": "",
+		"displayField": "subscriptionId"
+	},
+	"options": {
+		"draftAndPublish": false
+	},
+	"attributes": {
+		"subscriptionId": {
+			"type": "string",
+			"required": true,
+			"unique": true,
+			"private": false,
+			"configurable": false
+		},
+		"user": {
+			"type": "relation",
+			"relation": "manyToOne",
+			"target": "plugin::users-permissions.user",
+			"inversedBy": "subscriptions"
+		},
+		"plan": {
+			"type": "relation",
+			"relation": "manyToOne",
+			"target": "api::subscription-plan.subscription-plan",
+			"inversedBy": "subscriptions"
+		},
+		"status": {
+			"type": "enumeration",
+			"enum": [
+				"active",
+				"expired",
+				"pending_payment",
+				"pending_upgrade"
+			],
+			"default": "pending_payment",
+			"required": true
+		},
+		"startDate": {
+			"type": "datetime",
+			"required": true
+		},
+		"endDate": {
+			"type": "datetime",
+			"required": true
+		},
+		"paymentHistory": {
+			"type": "relation",
+			"relation": "oneToOne",
+			"target": "api::payment-history.payment-history"
+		},
+		"previousPlan": {
+			"type": "relation",
+			"relation": "manyToOne",
+			"target": "api::subscription-plan.subscription-plan"
+		},
+		"upgradeDetails": {
+			"type": "json",
+			"private": true
+		},
+		"renewalNotificationSent": {
+			"type": "boolean",
+			"default": false,
+			"private": true
+		}
+	}
+}

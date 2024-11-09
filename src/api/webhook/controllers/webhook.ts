@@ -1,51 +1,39 @@
-import Stripe from 'stripe';
-import { paymentService } from '../../../services/payment';
+import Stripe from 'stripe'
+import { paymentService } from '../../../services/payment.service'
+import { PaymentStatus } from '../../../types/payment.types'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-10-28.acacia'
-});
+	apiVersion: '2024-10-28.acacia',
+})
 
 export default {
-  async handle(ctx) {
-    try {
-      const signature = ctx.request.headers['stripe-signature'];
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      
-      if (!signature || !webhookSecret) {
-        return ctx.badRequest('Missing signature or webhook secret');
-      }
+	async handle(ctx) {
+		try {
+			const signature = ctx.request.headers['stripe-signature']
+			const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
-      const rawBody = ctx.request.body[Symbol.for('unparsedBody')];
-      if (!rawBody) {
-        return ctx.badRequest('No raw body provided');
-      }
+			if (!signature || !webhookSecret) {
+				return ctx.badRequest('Missing signature or webhook secret')
+			}
 
-      const event = stripe.webhooks.constructEvent(
-        rawBody,
-        signature,
-        webhookSecret
-      );
+			const rawBody = ctx.request.body[Symbol.for('unparsedBody')]
+			if (!rawBody) {
+				return ctx.badRequest('No raw body provided')
+			}
 
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as Stripe.Checkout.Session;
-        const paymentType = session.metadata?.type as 'order' | 'subscription' | 'auction';
+			const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
 
-        switch (paymentType) {
-          case 'order':
-            await paymentService.handleOrderPayment(ctx.strapi, session);
-            break;
-          case 'subscription':
-            await paymentService.handleSubscriptionPayment(ctx.strapi, session);
-            break;
-          case 'auction':
-            await paymentService.handleAuctionPayment(ctx.strapi, session);
-            break;
-        }
-      }
+			if (event.type === 'checkout.session.completed') {
+				const session = event.data.object as Stripe.Checkout.Session
 
-      return ctx.send({ received: true });
-    } catch (error) {
-      return ctx.badRequest(error.message);
-    }
-  }
-}; 
+				await paymentService.updatePaymentStatus(strapi, session.id, 'completed' as PaymentStatus, {
+					stripePaymentIntentId: session.payment_intent as string,
+				})
+			}
+
+			return ctx.send({ received: true })
+		} catch (error) {
+			return ctx.badRequest(error.message)
+		}
+	},
+}

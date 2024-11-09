@@ -36,12 +36,4 @@ export default ({ env }) => ({
 			},
 		},
 	},
-	i18n: {
-		enabled: true,
-		config: {
-			locales: ['pl', 'en', 'de'],
-			defaultLocale: 'pl',
-			modes: ['query'],
-		},
-	},
 })
