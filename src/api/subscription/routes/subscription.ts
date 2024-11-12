@@ -2,7 +2,7 @@ export default {
 	routes: [
 		{
 			method: 'POST',
-			path: '/subscriptions/create-checkout',
+			path: '/subscriptions/checkout',
 			handler: 'subscription.createCheckout',
 			config: {
 				auth: {
@@ -10,5 +10,25 @@ export default {
 				},
 			},
 		},
+		{
+			method: 'GET',
+			path: '/subscriptions/status',
+			handler: 'subscription.getStatus',
+			config: {
+				auth: {
+					required: true,
+				},
+			},
+		},
+		{
+			method: 'POST',
+			path: '/subscriptions/check-expired',
+			handler: 'subscription.checkExpired',
+			config: {
+				auth: {
+					required: true
+				}
+			}
+		}
 	],
 }

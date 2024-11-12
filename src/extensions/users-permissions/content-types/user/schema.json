@@ -82,19 +82,11 @@
 		},
 		"billingAddress": {
 			"type": "component",
-			"component": "user.address",
-			"required": true
+			"component": "user.address"
 		},
 		"shippingAddress": {
 			"type": "component",
-			"component": "user.address",
-			"required": true
-		},
-		"subscriptions": {
-			"type": "relation",
-			"relation": "oneToMany",
-			"target": "api::subscription.subscription",
-			"mappedBy": "user"
+			"component": "user.address"
 		}
 	}
 }

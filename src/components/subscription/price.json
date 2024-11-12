@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_subscription_price",
+  "info": {
+    "displayName": "Price",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "currency": {
+      "type": "enumeration",
+      "enum": ["PLN", "EUR", "USD"],
+      "required": true
+    },
+    "duration": {
+      "type": "enumeration",
+      "enum": ["monthly", "yearly"],
+      "required": true
+    },
+    "amount": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true,
+      "required": true
+    }
+  }
+} 

@@ -1,15 +1,11 @@
 import Stripe from 'stripe'
 import {
 	PaymentMethod,
-	PaymentType,
-	PaymentStatus,
 	CreatePaymentParams,
-	OrderPaymentParams,
-	SubscriptionPaymentParams,
-	StripeMetadata,
 	PaymentResponse,
-	UpdatePaymentStatusParams,
-	PaymentHistoryData,
+	PaymentStatus,
+	SupportedCurrency,
+	BankTransferDetails,
 } from '../types/payment.types'
 import { generateId } from '../utils/generateId'
 
@@ -17,234 +13,179 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: '2024-10-28.acacia',
 })
 
-const PAYMENT_METHODS_BY_CURRENCY = {
-	PLN: ['card', 'blik', 'p24'] as const,
-	EUR: ['card'] as const,
-	USD: ['card'] as const,
+const getPaymentMethodsForCurrency = (
+	currency: SupportedCurrency
+): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] => {
+	switch (currency) {
+		case 'PLN':
+			return ['card', 'blik', 'p24']
+		case 'EUR':
+		case 'USD':
+			return ['card']
+		default:
+			return ['card']
+	}
 }
 
 export const paymentService = {
-	async createPayment(strapi: any, params: CreatePaymentParams) {
-		if ('orderItems' in params) {
-			return this.handleOrderPayment(strapi, params)
-		} else {
-			return params.method === 'stripe'
-				? this.handleStripePayment(strapi, params)
-				: this.handleBankTransferPayment(strapi, params)
+	async createPayment(strapi: any, params: CreatePaymentParams): Promise<PaymentResponse> {
+		try {
+			const { method } = params
+
+			switch (method) {
+				case 'stripe':
+					return this.handleStripePayment(strapi, params)
+				case 'bank_transfer':
+					return this.handleBankTransfer(strapi, params)
+				default:
+					throw new Error('Nieobsługiwana metoda płatności')
+			}
+		} catch (error) {
+			console.error('Error in createPayment:', error)
+			throw error
 		}
 	},
 
-	async handleStripePayment(strapi: any, params: SubscriptionPaymentParams) {
-		const {
-			amount,
-			currency,
-			name,
-			description,
-			userId,
-			type,
-			method,
-			successUrl,
-			cancelUrl,
-			customerEmail,
-			metadata = {},
-		} = params
-
+	async handleStripePayment(strapi: any, params: CreatePaymentParams): Promise<PaymentResponse> {
 		try {
-			const user = await strapi.db.query('plugin::users-permissions.user').findOne({
-				where: { id: userId },
-			})
+			const { amount, currency, userId, successUrl, cancelUrl, subscription } = params
 
-			if (!user) {
-				throw new Error(`User not found`)
+			if (!successUrl || !cancelUrl) {
+				throw new Error('Brak wymaganych URL dla płatności Stripe')
 			}
 
-			const currencyKey = currency.toUpperCase() as keyof typeof PAYMENT_METHODS_BY_CURRENCY
-			const availablePaymentMethods = PAYMENT_METHODS_BY_CURRENCY[currencyKey] || ['card']
+			const paymentId = generateId('PAY')
 
-			const stripeMetadata: StripeMetadata = {
-				type,
-				userId: userId.toString(),
-				...Object.entries(metadata).reduce(
-					(acc, [key, value]) => ({
-						...acc,
-						[key]: value?.toString(),
-					}),
-					{}
-				),
-			}
-
-			const baseConfig: Stripe.Checkout.SessionCreateParams = {
-				mode: 'payment',
-				payment_method_types: [...availablePaymentMethods],
-				billing_address_collection: 'auto',
+			const sessionParams: Stripe.Checkout.SessionCreateParams = {
+				payment_method_types: getPaymentMethodsForCurrency(currency),
 				line_items: [
 					{
 						price_data: {
 							currency: currency.toLowerCase(),
 							product_data: {
-								name,
-								description,
+								name: 'Subskrypcja',
 							},
-							unit_amount: amount,
+							unit_amount: Math.round(amount * 100),
 						},
 						quantity: 1,
 					},
 				],
+				mode: 'payment',
 				success_url: successUrl,
 				cancel_url: cancelUrl,
-				customer_email: customerEmail || user.email,
-				metadata: stripeMetadata,
-				locale: metadata.locale as Stripe.Checkout.SessionCreateParams.Locale,
-				allow_promotion_codes: false,
 			}
 
-			const session = await stripe.checkout.sessions.create(baseConfig)
+			const session = await stripe.checkout.sessions.create(sessionParams)
 
-			const paymentHistory = await this.createPaymentHistory(strapi, {
-				userId,
-				amount: amount / 100,
-				currency,
-				type,
-				method,
-				status: 'pending',
-				stripeSessionId: session.id,
-				metadata: {
-					...metadata,
-					availablePaymentMethods,
+			const paymentHistory = await strapi.db.query('api::payment-history.payment-history').create({
+				data: {
+					paymentId,
+					method: 'stripe',
+					stripeSessionId: session.id,
+					amount,
+					currency,
+					paymentStatus: 'pending',
+					user: userId,
+					subscription,
 				},
 			})
 
 			return {
-				paymentHistory,
-				redirectUrl: session.url,
-				sessionId: session.id,
-				availablePaymentMethods: [...availablePaymentMethods],
+				paymentId: paymentHistory.paymentId,
+				status: 'pending',
+				redirectUrl: session.url!,
 			}
 		} catch (error) {
+			console.error('Error in handleStripePayment:', error)
 			throw error
 		}
 	},
 
-	async handleBankTransferPayment(strapi: any, params: SubscriptionPaymentParams) {
-		const { amount, currency, userId, type, metadata = {} } = params
-
+	async handleBankTransfer(strapi: any, params: CreatePaymentParams): Promise<PaymentResponse> {
 		try {
-			const bankTransferDetails = {
-				accountNumber: process.env.BANK_ACCOUNT_NUMBER,
-				accountHolder: process.env.BANK_ACCOUNT_HOLDER,
-				bankName: process.env.BANK_NAME,
-				title: `Payment ${generateId(type.toUpperCase())}`,
-				amount: amount / 100,
-				currency,
+			const { amount, currency, userId, subscription } = params
+			const paymentId = generateId('PAY')
+
+			const bankDetails = {
+				accountNumber: process.env.BANK_ACCOUNT_NUMBER!,
+				accountHolder: process.env.BANK_ACCOUNT_HOLDER!,
+				bankName: process.env.BANK_NAME!,
+				transferTitle: `${paymentId}_${userId}`,
 			}
 
-			const paymentHistory = await this.createPaymentHistory(strapi, {
-				userId,
-				amount: amount / 100,
+			const data = {
+				paymentId,
+				method: 'bank_transfer' as const,
+				amount,
 				currency,
-				type,
-				method: 'bank_transfer',
-				status: 'awaiting_confirmation',
-				bankTransferDetails,
-				metadata,
+				paymentStatus: 'pending' as const,
+				user: userId,
+				subscription,
+				bankDetails,
+			}
+
+			console.log('Attempting to create payment with data:', JSON.stringify(data, null, 2))
+
+			const paymentHistory = await strapi.db.query('api::payment-history.payment-history').create({
+				data,
 			})
 
+			console.log('Created payment history:', JSON.stringify(paymentHistory, null, 2))
+
 			return {
-				paymentHistory,
-				bankTransferDetails,
+				paymentId: paymentHistory.paymentId,
+				status: 'pending',
+				bankTransferDetails: bankDetails,
 			}
 		} catch (error) {
+			console.error('Error in handleBankTransfer:', error)
 			throw error
 		}
 	},
 
-	async createPaymentHistory(strapi: any, data: PaymentHistoryData) {
-		const paymentHistory = await strapi.db.query('api::payment-history.payment-history').create({
-			data: {
-				paymentId: generateId(data.type.toUpperCase()),
-				...data,
-			},
+	async getPaymentDetails(strapi: any, paymentId: string) {
+		return await strapi.db.query('api::payment-history.payment-history').findOne({
+			where: { paymentId },
+			populate: ['user', 'subscription', 'bankTransferDetails'],
 		})
+	},
+
+	async updatePaymentStatus(strapi: any, paymentId: string, status: PaymentStatus) {
+		const payment = await this.getPaymentDetails(strapi, paymentId)
+
+		if (!payment) {
+			throw new Error('Płatność nie została znaleziona')
+		}
+
+		const updateData: any = {
+			paymentStatus: status,
+		}
+
+		switch (status) {
+			case 'completed':
+				updateData.completedAt = new Date()
+				break
+			case 'failed':
+				updateData.failedAt = new Date()
+				break
+			case 'refunded':
+				updateData.refundedAt = new Date()
+				break
+		}
 
 		await strapi.db.query('api::payment-history.payment-history').update({
-			where: { id: paymentHistory.id },
-			data: {
-				user: data.userId,
-			},
+			where: { id: payment.id },
+			data: updateData,
 		})
 
-		return await strapi.db.query('api::payment-history.payment-history').findOne({
-			where: { id: paymentHistory.id },
-			populate: ['user'],
-		})
-	},
-
-	async handleOrderPayment(strapi: any, params: OrderPaymentParams) {
-		throw new Error('Order payment not implemented yet')
-	},
-
-	async confirmBankTransfer(strapi: any, paymentId: string) {
-		try {
-			return await strapi.db.query('api::payment-history.payment-history').update({
-				where: { paymentId },
-				data: {
-					status: 'completed',
-					completedAt: new Date(),
-				},
+		if (payment.subscription) {
+			const subscriptionStatus = status === 'completed' ? 'active' : 'cancelled'
+			await strapi.db.query('api::subscription.subscription').update({
+				where: { id: payment.subscription.id },
+				data: { subscriptionStatus },
 			})
-		} catch (error) {
-			throw error
 		}
-	},
 
-	async cancelPayment(strapi: any, paymentId: string) {
-		try {
-			const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
-				where: { paymentId },
-			})
-
-			if (!payment) {
-				throw new Error('Payment not found')
-			}
-
-			if (payment.method === 'stripe' && payment.stripeSessionId) {
-				await stripe.checkout.sessions.expire(payment.stripeSessionId)
-			}
-
-			return await strapi.db.query('api::payment-history.payment-history').update({
-				where: { id: payment.id },
-				data: {
-					status: 'cancelled',
-					cancelledAt: new Date(),
-				},
-			})
-		} catch (error) {
-			throw error
-		}
-	},
-
-	async updatePaymentStatus(strapi: any, sessionId: string, status: PaymentStatus, params: UpdatePaymentStatusParams) {
-		try {
-			const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
-				where: { stripeSessionId: sessionId },
-			})
-
-			if (!payment) {
-				throw new Error('Payment not found')
-			}
-
-			return await strapi.db.query('api::payment-history.payment-history').update({
-				where: { id: payment.id },
-				data: {
-					status,
-					...(status === 'completed' && { completedAt: new Date() }),
-					...(status === 'failed' && { failedAt: new Date() }),
-					...(status === 'refunded' && { refundedAt: new Date() }),
-					...params,
-				},
-			})
-		} catch (error) {
-			throw error
-		}
+		return await this.getPaymentDetails(strapi, paymentId)
 	},
 }

@@ -1,132 +1,71 @@
 {
-	"kind": "collectionType",
-	"collectionName": "subscription_plans",
-	"info": {
-		"singularName": "subscription-plan",
-		"pluralName": "subscription-plans",
-		"displayName": "Subscription Plan",
-		"description": "",
-		"displayField": "displayName"
-	},
-	"options": {
-		"draftAndPublish": false
-	},
-	"attributes": {
-		"displayName": {
-			"type": "string",
-			"required": true
-		},
-		"names": {
-			"type": "json",
-			"required": true,
-			"default": {
-				"pl": "Plan Podstawowy",
-				"en": "Basic Plan"
-			}
-		},
-		"descriptions": {
-			"type": "json",
-			"required": true,
-			"default": {
-				"pl": "Plan podstawowy z dostępem do podstawowych funkcji",
-				"en": "Basic plan with access to core features"
-			}
-		},
-		"level": {
-			"type": "enumeration",
-			"enum": ["basic", "premium", "premium_plus"],
-			"required": true
-		},
-		"prices": {
-			"type": "json",
-			"required": true,
-			"default": {
-				"pl": {
-					"monthly": {
-						"PLN": {
-							"amount": 29,
-							"isActive": true
-						}
-					},
-					"yearly": {
-						"PLN": {
-							"amount": 290,
-							"isActive": true
-						}
-					}
-				},
-				"en": {
-					"monthly": {
-						"EUR": {
-							"amount": 7,
-							"isActive": true
-						},
-						"USD": {
-							"amount": 8,
-							"isActive": true
-						}
-					},
-					"yearly": {
-						"EUR": {
-							"amount": 70,
-							"isActive": true
-						},
-						"USD": {
-							"amount": 80,
-							"isActive": true
-						}
-					}
-				}
-			}
-		},
-		"features": {
-			"type": "json",
-			"required": true,
-			"default": {
-				"pl": [
-					{
-						"name": "Widoczność cen",
-						"description": "Możliwość przeglądania cen produktów",
-						"type": "view_prices",
-						"isEnabled": true
-					},
-					{
-						"name": "Składanie zamówień",
-						"description": "Możliwość składania zamówień",
-						"type": "buy_products",
-						"isEnabled": true
-					}
-				],
-				"en": [
-					{
-						"name": "Price visibility",
-						"description": "Ability to view product prices",
-						"type": "view_prices",
-						"isEnabled": true
-					},
-					{
-						"name": "Place orders",
-						"description": "Ability to place orders",
-						"type": "buy_products",
-						"isEnabled": true
-					}
-				]
-			}
-		},
-		"isActive": {
-			"type": "boolean",
-			"default": true,
-			"required": true
-		},
-		"sortOrder": {
-			"type": "integer",
-			"default": 0
-		},
-		"subscriptions": {
-			"type": "relation",
-			"relation": "oneToMany",
-			"target": "api::subscription.subscription",
-			"mappedBy": "plan"
-		}
-	}
+  "kind": "collectionType",
+  "collectionName": "subscription_plans",
+  "info": {
+    "singularName": "subscription-plan",
+    "pluralName": "subscription-plans",
+    "displayName": "Subscription Plan",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true,
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "level": {
+      "type": "enumeration",
+      "enum": [
+        "basic"
+      ],
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    },
+    "prices": {
+      "type": "component",
+      "component": "subscription.price",
+      "repeatable": true,
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
+    }
+  }
 }

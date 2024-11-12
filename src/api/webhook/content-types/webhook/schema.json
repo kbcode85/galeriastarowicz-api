@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "webhooks",
+  "info": {
+    "singularName": "webhook",
+    "pluralName": "webhooks",
+    "displayName": "Webhook"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "type": {
+      "type": "string",
+      "required": true
+    },
+    "payload": {
+      "type": "json"
+    },
+    "status": {
+      "type": "string",
+      "required": true
+    },
+    "processedAt": {
+      "type": "datetime"
+    }
+  }
+} 

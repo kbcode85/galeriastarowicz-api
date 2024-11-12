@@ -1,5 +1,30 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface SubscriptionPrice extends Struct.ComponentSchema {
+  collectionName: 'components_subscription_price';
+  info: {
+    description: '';
+    displayName: 'Price';
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    currency: Schema.Attribute.Enumeration<['PLN', 'EUR', 'USD']> &
+      Schema.Attribute.Required;
+    duration: Schema.Attribute.Enumeration<['monthly', 'yearly']> &
+      Schema.Attribute.Required;
+    isActive: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
+  };
+}
+
 export interface SubscriptionUserSubscription extends Struct.ComponentSchema {
   collectionName: 'components_subscription_user_subscriptions';
   info: {
@@ -74,6 +99,7 @@ export interface UserCompany extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'subscription.price': SubscriptionPrice;
       'subscription.user-subscription': SubscriptionUserSubscription;
       'user.address': UserAddress;
       'user.company': UserCompany;

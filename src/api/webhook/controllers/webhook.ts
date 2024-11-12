@@ -1,39 +1,127 @@
+import { factories } from '@strapi/strapi'
 import Stripe from 'stripe'
-import { paymentService } from '../../../services/payment.service'
-import { PaymentStatus } from '../../../types/payment.types'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: '2024-10-28.acacia',
 })
 
-export default {
-	async handle(ctx) {
+interface PaymentHistoryData {
+	id: number
+	paymentId: string
+	subscription?: {
+		id: number
+	}
+}
+
+export default factories.createCoreController('api::webhook.webhook', ({ strapi }) => ({
+	async stripe(ctx) {
+		const signature = ctx.request.headers['stripe-signature']
+
 		try {
-			const signature = ctx.request.headers['stripe-signature']
-			const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
-			if (!signature || !webhookSecret) {
-				return ctx.badRequest('Missing signature or webhook secret')
-			}
-
 			const rawBody = ctx.request.body[Symbol.for('unparsedBody')]
-			if (!rawBody) {
-				return ctx.badRequest('No raw body provided')
+
+			const event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET!)
+
+			switch (event.type) {
+				case 'checkout.session.completed': {
+					const session = event.data.object as Stripe.Checkout.Session
+					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
+						where: {
+							stripeSessionId: session.id,
+							paymentId: session.metadata?.paymentId || session.client_reference_id,
+						},
+						populate: ['subscription'],
+					})
+
+					if (!payment) {
+						throw new Error('Payment not found')
+					}
+
+					await strapi.db.query('api::payment-history.payment-history').update({
+						where: { id: payment.id },
+						data: {
+							paymentStatus: 'completed',
+							stripePaymentId: session.payment_intent as string,
+						},
+					})
+
+					console.log(
+						`Webhook: Updated payment ${payment.paymentId} (${payment.id}) status to completed with payment intent ${session.payment_intent}`
+					)
+					break
+				}
+
+				case 'charge.refunded': {
+					const charge = event.data.object as Stripe.Charge
+					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
+						where: { stripePaymentId: charge.payment_intent as string },
+						populate: ['subscription'],
+					})
+
+					if (!payment) {
+						throw new Error('Payment not found')
+					}
+
+					await strapi.db.query('api::payment-history.payment-history').update({
+						where: { id: payment.id },
+						data: {
+							paymentStatus: 'refunded',
+						},
+					})
+
+					console.log(`Webhook: Updated payment ${payment.id} status to refunded`)
+					break
+				}
+
+				case 'payment_intent.payment_failed': {
+					const paymentIntent = event.data.object as Stripe.PaymentIntent
+					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
+						where: { stripePaymentId: paymentIntent.id },
+						populate: ['subscription'],
+					})
+
+					if (!payment) {
+						throw new Error('Payment not found')
+					}
+
+					await strapi.db.query('api::payment-history.payment-history').update({
+						where: { id: payment.id },
+						data: {
+							paymentStatus: 'failed',
+						},
+					})
+
+					console.log(`Webhook: Updated payment ${payment.id} status to failed`)
+					break
+				}
+
+				case 'checkout.session.expired': {
+					const session = event.data.object as Stripe.Checkout.Session
+					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
+						where: { stripeSessionId: session.id },
+						populate: ['subscription'],
+					})
+
+					if (!payment) {
+						throw new Error('Payment not found')
+					}
+
+					await strapi.db.query('api::payment-history.payment-history').update({
+						where: { id: payment.id },
+						data: {
+							paymentStatus: 'failed',
+						},
+					})
+
+					console.log(`Webhook: Updated payment ${payment.id} status to failed (session expired)`)
+					break
+				}
 			}
 
-			const event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret)
-
-			if (event.type === 'checkout.session.completed') {
-				const session = event.data.object as Stripe.Checkout.Session
-
-				await paymentService.updatePaymentStatus(strapi, session.id, 'completed' as PaymentStatus, {
-					stripePaymentIntentId: session.payment_intent as string,
-				})
-			}
-
-			return ctx.send({ received: true })
-		} catch (error) {
-			return ctx.badRequest(error.message)
+			return { success: true }
+		} catch (err) {
+			console.error('Webhook error:', err)
+			ctx.throw(400, `Webhook Error: ${err.message}`)
 		}
 	},
-}
+}))

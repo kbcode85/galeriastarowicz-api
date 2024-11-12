@@ -29,11 +29,13 @@ export default ({ env }) => ({
 					'firstName',
 					'lastName',
 					'phone',
-					'company',
-					'billingAddress',
-					'shippingAddress',
 				],
 			},
 		},
+	},
+	i18n: {
+		enabled: true,
+		defaultLocale: 'pl',
+		locales: ['pl', 'en'],
 	},
 })

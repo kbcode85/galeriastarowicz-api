@@ -373,8 +373,6 @@ export interface ApiPaymentHistoryPaymentHistory
   extends Struct.CollectionTypeSchema {
   collectionName: 'payment_histories';
   info: {
-    description: '';
-    displayField: 'paymentId';
     displayName: 'Payment History';
     pluralName: 'payment-histories';
     singularName: 'payment-history';
@@ -384,13 +382,13 @@ export interface ApiPaymentHistoryPaymentHistory
   };
   attributes: {
     amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    bankTransferDetails: Schema.Attribute.JSON;
-    cancelledAt: Schema.Attribute.DateTime;
+    bankDetails: Schema.Attribute.JSON;
     completedAt: Schema.Attribute.DateTime;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    currency: Schema.Attribute.String & Schema.Attribute.Required;
+    currency: Schema.Attribute.Enumeration<['PLN', 'EUR', 'USD']> &
+      Schema.Attribute.Required;
     failedAt: Schema.Attribute.DateTime;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -398,47 +396,31 @@ export interface ApiPaymentHistoryPaymentHistory
       'api::payment-history.payment-history'
     > &
       Schema.Attribute.Private;
-    metadata: Schema.Attribute.JSON;
     method: Schema.Attribute.Enumeration<['stripe', 'bank_transfer']> &
       Schema.Attribute.Required;
-    notificationsSent: Schema.Attribute.JSON & Schema.Attribute.Private;
     paymentId: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
-    previousSubscription: Schema.Attribute.Relation<
-      'oneToOne',
-      'api::subscription.subscription'
-    >;
-    publishedAt: Schema.Attribute.DateTime;
-    refundedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.Enumeration<
-      ['pending', 'completed', 'failed', 'refunded', 'awaiting_confirmation']
-    > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pending'>;
-    stripePaymentIntentId: Schema.Attribute.String & Schema.Attribute.Unique;
-    stripeSessionId: Schema.Attribute.String & Schema.Attribute.Unique;
-    subscription: Schema.Attribute.Relation<
-      'oneToOne',
-      'api::subscription.subscription'
-    >;
-    type: Schema.Attribute.Enumeration<
-      [
-        'subscription',
-        'subscription_upgrade',
-        'subscription_renewal',
-        'order',
-        'auction',
-      ]
+    paymentStatus: Schema.Attribute.Enumeration<
+      ['pending', 'completed', 'failed', 'refunded']
     > &
       Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    refundedAt: Schema.Attribute.DateTime;
+    stripePaymentId: Schema.Attribute.String;
+    stripeSessionId: Schema.Attribute.String;
+    subscription: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::subscription.subscription'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     user: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
-    >;
+    > &
+      Schema.Attribute.Required;
   };
 }
 
@@ -447,7 +429,6 @@ export interface ApiSubscriptionPlanSubscriptionPlan
   collectionName: 'subscription_plans';
   info: {
     description: '';
-    displayField: 'displayName';
     displayName: 'Subscription Plan';
     pluralName: 'subscription-plans';
     singularName: 'subscription-plan';
@@ -455,112 +436,57 @@ export interface ApiSubscriptionPlanSubscriptionPlan
   options: {
     draftAndPublish: false;
   };
+  pluginOptions: {
+    i18n: {
+      localized: true;
+    };
+  };
   attributes: {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    descriptions: Schema.Attribute.JSON &
+    description: Schema.Attribute.Text &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<{
-        en: 'Basic plan with access to core features';
-        pl: 'Plan podstawowy z dost\u0119pem do podstawowych funkcji';
-      }>;
-    displayName: Schema.Attribute.String & Schema.Attribute.Required;
-    features: Schema.Attribute.JSON &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<{
-        en: [
-          {
-            description: 'Ability to view product prices';
-            isEnabled: true;
-            name: 'Price visibility';
-            type: 'view_prices';
-          },
-          {
-            description: 'Ability to place orders';
-            isEnabled: true;
-            name: 'Place orders';
-            type: 'buy_products';
-          },
-        ];
-        pl: [
-          {
-            description: 'Mo\u017Cliwo\u015B\u0107 przegl\u0105dania cen produkt\u00F3w';
-            isEnabled: true;
-            name: 'Widoczno\u015B\u0107 cen';
-            type: 'view_prices';
-          },
-          {
-            description: 'Mo\u017Cliwo\u015B\u0107 sk\u0142adania zam\u00F3wie\u0144';
-            isEnabled: true;
-            name: 'Sk\u0142adanie zam\u00F3wie\u0144';
-            type: 'buy_products';
-          },
-        ];
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
       }>;
     isActive: Schema.Attribute.Boolean &
       Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }> &
       Schema.Attribute.DefaultTo<true>;
-    level: Schema.Attribute.Enumeration<['basic', 'premium', 'premium_plus']> &
-      Schema.Attribute.Required;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    level: Schema.Attribute.Enumeration<['basic']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
+        };
+      }>;
+    locale: Schema.Attribute.String;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::subscription-plan.subscription-plan'
-    > &
-      Schema.Attribute.Private;
-    names: Schema.Attribute.JSON &
+    >;
+    name: Schema.Attribute.String &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<{
-        en: 'Basic Plan';
-        pl: 'Plan Podstawowy';
-      }>;
-    prices: Schema.Attribute.JSON &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<{
-        en: {
-          monthly: {
-            EUR: {
-              amount: 7;
-              isActive: true;
-            };
-            USD: {
-              amount: 8;
-              isActive: true;
-            };
-          };
-          yearly: {
-            EUR: {
-              amount: 70;
-              isActive: true;
-            };
-            USD: {
-              amount: 80;
-              isActive: true;
-            };
-          };
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
         };
-        pl: {
-          monthly: {
-            PLN: {
-              amount: 29;
-              isActive: true;
-            };
-          };
-          yearly: {
-            PLN: {
-              amount: 290;
-              isActive: true;
-            };
-          };
+      }>;
+    prices: Schema.Attribute.Component<'subscription.price', true> &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetPluginOptions<{
+        i18n: {
+          localized: true;
         };
       }>;
     publishedAt: Schema.Attribute.DateTime;
-    sortOrder: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    subscriptions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::subscription.subscription'
-    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -571,8 +497,6 @@ export interface ApiSubscriptionSubscription
   extends Struct.CollectionTypeSchema {
   collectionName: 'subscriptions';
   info: {
-    description: '';
-    displayField: 'subscriptionId';
     displayName: 'Subscription';
     pluralName: 'subscriptions';
     singularName: 'subscription';
@@ -591,39 +515,65 @@ export interface ApiSubscriptionSubscription
       'api::subscription.subscription'
     > &
       Schema.Attribute.Private;
-    paymentHistory: Schema.Attribute.Relation<
+    payment: Schema.Attribute.Relation<
       'oneToOne',
       'api::payment-history.payment-history'
     >;
     plan: Schema.Attribute.Relation<
       'manyToOne',
       'api::subscription-plan.subscription-plan'
-    >;
-    previousPlan: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::subscription-plan.subscription-plan'
-    >;
-    publishedAt: Schema.Attribute.DateTime;
-    renewalNotificationSent: Schema.Attribute.Boolean &
-      Schema.Attribute.Private &
-      Schema.Attribute.DefaultTo<false>;
-    startDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
-    status: Schema.Attribute.Enumeration<
-      ['active', 'expired', 'pending_payment', 'pending_upgrade']
     > &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'pending_payment'>;
+      Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    startDate: Schema.Attribute.DateTime & Schema.Attribute.Required;
+    subscriptionDuration: Schema.Attribute.Enumeration<['monthly', 'yearly']> &
+      Schema.Attribute.Required;
     subscriptionId: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
+    subscriptionStatus: Schema.Attribute.Enumeration<
+      ['pending_payment', 'active', 'expired', 'cancelled']
+    > &
+      Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    upgradeDetails: Schema.Attribute.JSON & Schema.Attribute.Private;
     user: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.user'
-    >;
+    > &
+      Schema.Attribute.Required;
+  };
+}
+
+export interface ApiWebhookWebhook extends Struct.CollectionTypeSchema {
+  collectionName: 'webhooks';
+  info: {
+    displayName: 'Webhook';
+    pluralName: 'webhooks';
+    singularName: 'webhook';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::webhook.webhook'
+    > &
+      Schema.Attribute.Private;
+    payload: Schema.Attribute.JSON;
+    processedAt: Schema.Attribute.DateTime;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.String & Schema.Attribute.Required;
+    type: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1084,8 +1034,7 @@ export interface PluginUsersPermissionsUser
     draftAndPublish: false;
   };
   attributes: {
-    billingAddress: Schema.Attribute.Component<'user.address', false> &
-      Schema.Attribute.Required;
+    billingAddress: Schema.Attribute.Component<'user.address', false>;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     company: Schema.Attribute.Component<'user.company', false>;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1119,12 +1068,7 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
-    shippingAddress: Schema.Attribute.Component<'user.address', false> &
-      Schema.Attribute.Required;
-    subscriptions: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::subscription.subscription'
-    >;
+    shippingAddress: Schema.Attribute.Component<'user.address', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1150,6 +1094,7 @@ declare module '@strapi/strapi' {
       'api::payment-history.payment-history': ApiPaymentHistoryPaymentHistory;
       'api::subscription-plan.subscription-plan': ApiSubscriptionPlanSubscriptionPlan;
       'api::subscription.subscription': ApiSubscriptionSubscription;
+      'api::webhook.webhook': ApiWebhookWebhook;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

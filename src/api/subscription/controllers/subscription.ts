@@ -1,87 +1,179 @@
 import { factories } from '@strapi/strapi'
 import { Context } from 'koa'
 import { paymentService } from '../../../services/payment.service'
-import {
-	CreateCheckoutBody,
-	PaymentResponse,
-	RequestQuery,
-	SubscriptionPaymentParams,
-} from '../../../types/payment.types'
-import { getLocaleFromRequest, getCurrencyForLocale, formatPrice } from '../../../utils/locale'
+import { CreateCheckoutBody } from '../../../types/subscription.types'
+import { generateId } from '../../../utils/generateId'
+
+interface Price {
+	currency: string
+	duration: 'monthly' | 'yearly'
+	amount: number
+	isActive: boolean
+}
+
+interface SubscriptionPlan {
+	id: number
+	name: string
+	description: string
+	isActive: boolean
+	level: 'basic'
+	prices: Price[]
+}
 
 export default factories.createCoreController('api::subscription.subscription', ({ strapi }) => ({
 	async createCheckout(ctx: Context) {
 		try {
-			const { planId, successUrl, cancelUrl, duration } = ctx.request.body as CreateCheckoutBody
+			const { planId, currency, method, duration, successUrl, cancelUrl } = ctx.request.body as CreateCheckoutBody
 			const user = ctx.state.user
-			const locale = getLocaleFromRequest(ctx)
-			const preferredCurrency = (ctx.query as RequestQuery).currency
-			const currency = getCurrencyForLocale(locale, preferredCurrency)
 
-			if (!planId || !successUrl || !cancelUrl || !duration) {
-				return ctx.badRequest('Missing required fields')
+			// Walidacja podstawowych pól
+			if (!planId || !currency || !method || !duration) {
+				return ctx.badRequest('Brak wymaganych pól')
 			}
 
-			const plan = await strapi.db.query('api::subscription-plan.subscription-plan').findOne({
-				where: { id: planId, isActive: true },
+			// Walidacja URL dla Stripe
+			if (method === 'stripe' && (!successUrl || !cancelUrl)) {
+				return ctx.badRequest('Dla płatności Stripe wymagane są successUrl i cancelUrl')
+			}
+
+			// Pobierz plan subskrypcji
+			const plan = await strapi.db
+				.query('api::subscription-plan.subscription-plan')
+				.findOne({
+					where: { id: planId, isActive: true },
+					populate: { prices: true }
+				}) as unknown as SubscriptionPlan
+
+			if (!plan || !plan.isActive) {
+				return ctx.badRequest('Plan subskrypcji nie został znaleziony lub jest nieaktywny')
+			}
+
+			// Znajdź cenę dla wybranej waluty i okresu
+			const price = plan.prices.find(
+				p => p.currency === currency && 
+				p.duration === duration && 
+				p.isActive
+			)
+
+			if (!price) {
+				return ctx.badRequest(`Brak aktywnej ceny dla ${currency} i okresu ${duration}`)
+			}
+
+			// Utwórz subskrypcję w statusie pending
+			const subscription = await strapi.db
+				.query('api::subscription.subscription')
+				.create({
+					data: {
+						subscriptionId: generateId('SUB'),
+						user: user.id,
+						plan: planId,
+						subscriptionStatus: 'pending_payment',
+						subscriptionDuration: duration,
+						startDate: new Date(),
+						endDate: duration === 'yearly' 
+								? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+								: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+					},
+				})
+
+			// Utwórz płatność
+			const payment = await paymentService.createPayment(strapi, {
+					amount: price.amount,
+					currency,
+					userId: user.id.toString(),
+					method,
+					successUrl,
+					cancelUrl,
+					subscription: subscription.id,
 			})
 
-			if (!plan) {
-				return ctx.badRequest('Subscription plan not found or inactive')
-			}
-
-			const activeAmount = plan.prices?.[locale]?.[duration]?.[currency]
-
-			if (!activeAmount || !activeAmount.isActive) {
-				return ctx.badRequest(`No active amount found for ${duration} duration in ${currency}`)
-			}
-
-			const localeFeatures = plan.features?.[locale] || []
-			const enabledFeatures = localeFeatures.filter(feature => feature.isEnabled)
-
-			const description = [
-				`${formatPrice(activeAmount.amount, currency, locale)} / ${
-					duration === 'yearly' ? (locale === 'pl' ? 'rok' : 'year') : locale === 'pl' ? 'miesiąc' : 'month'
-				}`,
-				'',
-				locale === 'pl' ? 'Zawiera:' : 'Includes:',
-				...enabledFeatures.map(feature => `• ${feature.name}`),
-			].join('\n')
-
-			const paymentParams: SubscriptionPaymentParams = {
-				amount: Math.round(activeAmount.amount * 100),
-				currency,
-				userId: user.id,
-				type: 'subscription',
-				method: 'stripe',
-				successUrl,
-				cancelUrl,
-				customerEmail: user.email,
-				name: plan.names[locale],
-				description,
-				metadata: {
-					planId: plan.id.toString(),
-					planLevel: plan.level,
-					duration,
-					currency,
-					locale,
-					userId: user.id.toString(),
-					features: enabledFeatures.map(feature => feature.type).join(','),
-				},
-			}
-
-			const session = (await paymentService.createPayment(strapi, paymentParams)) as PaymentResponse
-
 			return {
-				sessionId: session.sessionId,
-				url: session.redirectUrl,
-				paymentMethods: session.availablePaymentMethods,
-				currency,
-				amount: activeAmount.amount,
-				formattedPrice: formatPrice(activeAmount.amount, currency, locale),
+				paymentId: payment.paymentId,
+				status: payment.status,
+				redirectUrl: payment.redirectUrl,
+						bankTransferDetails: payment.bankTransferDetails,
+						amount: price.amount,
+						currency,
 			}
+
 		} catch (error) {
-			return ctx.badRequest(error.message)
+			ctx.throw(500, error.message)
 		}
 	},
+
+	async getStatus(ctx: Context) {
+		try {
+			const user = ctx.state.user
+
+			const subscription = await strapi.db
+				.query('api::subscription.subscription')
+				.findOne({
+					where: { 
+						user: user.id,
+						subscriptionStatus: 'active',
+						endDate: {
+							$gt: new Date()
+						}
+					},
+					populate: {
+						plan: {
+							select: ['name', 'level']
+						},
+						payment: {
+							select: ['paymentId', 'paymentStatus', 'amount', 'currency']
+						}
+					},
+					orderBy: { endDate: 'desc' }
+				})
+
+			if (!subscription) {
+				return {
+					hasActiveSubscription: false,
+					subscription: null
+				}
+			}
+
+			// Sprawdź czy subskrypcja wygasa w ciągu 7 dni
+			const sevenDaysFromNow = new Date()
+			sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
+			const isExpiringSoon = new Date(subscription.endDate) <= sevenDaysFromNow
+
+			return {
+				hasActiveSubscription: true,
+				subscription: {
+					id: subscription.id,
+					subscriptionId: subscription.subscriptionId,
+					planName: subscription.plan.name,
+					planLevel: subscription.plan.level,
+					startDate: subscription.startDate,
+					endDate: subscription.endDate,
+					subscriptionDuration: subscription.subscriptionDuration,
+					payment: subscription.payment,
+					isExpiringSoon,
+					daysLeft: Math.ceil(
+						(new Date(subscription.endDate).getTime() - new Date().getTime()) / 
+						(1000 * 60 * 60 * 24)
+					)
+				}
+			}
+
+		} catch (error) {
+			ctx.throw(500, error.message)
+		}
+	},
+
+	async checkExpired(ctx) {
+		try {
+			const expiredCount = await strapi
+				.service('api::subscription.subscription')
+				.checkExpiredSubscriptions()
+
+			return {
+				expiredCount,
+				message: `Checked and updated ${expiredCount} expired subscriptions`
+			}
+		} catch (error) {
+			ctx.throw(500, error.message)
+		}
+	}
 }))
