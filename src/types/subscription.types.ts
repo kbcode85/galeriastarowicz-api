@@ -11,6 +11,7 @@ export interface CreateCheckoutBody {
 
 export interface CheckoutResponse {
   paymentId: string
+  sessionId?: string // dla Stripe
   status: 'pending'
   redirectUrl?: string // dla Stripe
   bankTransferDetails?: {
@@ -20,5 +21,5 @@ export interface CheckoutResponse {
     transferTitle: string
   }
   amount: number
-  currency: SupportedCurrency
+  currency: string
 } 

@@ -1,59 +1,35 @@
 {
-	"collectionName": "components_user_addresses",
-	"info": {
-		"displayName": "Address",
-		"description": "User address component"
-	},
-	"options": {},
-	"attributes": {
-		"street": {
-			"type": "string",
-			"required": true
-		},
-		"buildingNumber": {
-			"type": "string",
-			"required": true
-		},
-		"apartmentNumber": {
-			"type": "string"
-		},
-		"city": {
-			"type": "string",
-			"required": true
-		},
-		"postalCode": {
-			"type": "string",
-			"required": true
-		},
-		"voivodeship": {
-			"type": "enumeration",
-			"enum": [
-				"dolnoslaskie",
-				"kujawsko_pomorskie",
-				"lubelskie",
-				"lubuskie",
-				"lodzkie",
-				"malopolskie",
-				"mazowieckie",
-				"opolskie",
-				"podkarpackie",
-				"podlaskie",
-				"pomorskie",
-				"slaskie",
-				"swietokrzyskie",
-				"warminsko_mazurskie",
-				"wielkopolskie",
-				"zachodniopomorskie"
-			],
-			"required": true
-		},
-		"country": {
-			"type": "string",
-			"default": "Polska",
-			"required": true
-		},
-		"additionalInfo": {
-			"type": "text"
-		}
-	}
+  "collectionName": "components_user_addresses",
+  "info": {
+    "displayName": "Address",
+    "description": "User address component"
+  },
+  "options": {},
+  "attributes": {
+    "street": {
+      "type": "string"
+    },
+    "buildingNumber": {
+      "type": "string"
+    },
+    "apartmentNumber": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "postalCode": {
+      "type": "string"
+    },
+    "voivodeship": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string",
+      "default": "Polska"
+    },
+    "additionalInfo": {
+      "type": "text"
+    }
+  }
 }

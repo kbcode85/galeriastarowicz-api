@@ -14,79 +14,68 @@
 	"attributes": {
 		"username": {
 			"type": "string",
-			"minLength": 3,
 			"unique": true,
-			"configurable": false,
 			"required": true
 		},
 		"email": {
 			"type": "email",
-			"minLength": 6,
-			"configurable": false,
-			"required": true
+			"required": true,
+			"unique": true
 		},
 		"provider": {
-			"type": "string",
-			"configurable": false
+			"type": "string"
 		},
 		"password": {
 			"type": "password",
-			"minLength": 6,
-			"configurable": false,
-			"private": true,
-			"searchable": false
+			"private": true
 		},
 		"resetPasswordToken": {
 			"type": "string",
-			"configurable": false,
-			"private": true,
-			"searchable": false
+			"private": true
 		},
 		"confirmationToken": {
 			"type": "string",
-			"configurable": false,
-			"private": true,
-			"searchable": false
+			"private": true
 		},
 		"confirmed": {
 			"type": "boolean",
-			"default": false,
-			"configurable": false
+			"default": false
 		},
 		"blocked": {
 			"type": "boolean",
-			"default": false,
-			"configurable": false
+			"default": false
 		},
 		"role": {
 			"type": "relation",
 			"relation": "manyToOne",
 			"target": "plugin::users-permissions.role",
 			"inversedBy": "users",
-			"configurable": false
+			"configurable": false,
+			"required": true
 		},
 		"firstName": {
-			"type": "string",
-			"required": true
+			"type": "string"
 		},
 		"lastName": {
-			"type": "string",
-			"required": true
+			"type": "string"
 		},
 		"phone": {
 			"type": "string"
 		},
 		"company": {
 			"type": "component",
-			"component": "user.company"
+			"component": "user.company",
+			"required": false
 		},
 		"billingAddress": {
 			"type": "component",
-			"component": "user.address"
+			"component": "user.address",
+			"required": false
 		},
 		"shippingAddress": {
 			"type": "component",
-			"component": "user.address"
+			"component": "user.address",
+			"required": false
 		}
 	}
 }

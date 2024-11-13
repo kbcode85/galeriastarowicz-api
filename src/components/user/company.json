@@ -1,21 +1,19 @@
 {
-	"collectionName": "components_user_companies",
-	"info": {
-		"displayName": "Company",
-		"description": "Company information"
-	},
-	"options": {},
-	"attributes": {
-		"name": {
-			"type": "string",
-			"required": true
-		},
-		"nip": {
-			"type": "string",
-			"required": true
-		},
-		"regon": {
-			"type": "string"
-		}
-	}
+  "collectionName": "components_user_companies",
+  "info": {
+    "displayName": "Company",
+    "description": "Company information"
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "nip": {
+      "type": "string"
+    },
+    "regon": {
+      "type": "string"
+    }
+  }
 }

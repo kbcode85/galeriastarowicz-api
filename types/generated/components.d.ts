@@ -52,34 +52,12 @@ export interface UserAddress extends Struct.ComponentSchema {
   attributes: {
     additionalInfo: Schema.Attribute.Text;
     apartmentNumber: Schema.Attribute.String;
-    buildingNumber: Schema.Attribute.String & Schema.Attribute.Required;
-    city: Schema.Attribute.String & Schema.Attribute.Required;
-    country: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'Polska'>;
-    postalCode: Schema.Attribute.String & Schema.Attribute.Required;
-    street: Schema.Attribute.String & Schema.Attribute.Required;
-    voivodeship: Schema.Attribute.Enumeration<
-      [
-        'dolnoslaskie',
-        'kujawsko_pomorskie',
-        'lubelskie',
-        'lubuskie',
-        'lodzkie',
-        'malopolskie',
-        'mazowieckie',
-        'opolskie',
-        'podkarpackie',
-        'podlaskie',
-        'pomorskie',
-        'slaskie',
-        'swietokrzyskie',
-        'warminsko_mazurskie',
-        'wielkopolskie',
-        'zachodniopomorskie',
-      ]
-    > &
-      Schema.Attribute.Required;
+    buildingNumber: Schema.Attribute.String;
+    city: Schema.Attribute.String;
+    country: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Polska'>;
+    postalCode: Schema.Attribute.String;
+    street: Schema.Attribute.String;
+    voivodeship: Schema.Attribute.String;
   };
 }
 
@@ -90,8 +68,8 @@ export interface UserCompany extends Struct.ComponentSchema {
     displayName: 'Company';
   };
   attributes: {
-    name: Schema.Attribute.String & Schema.Attribute.Required;
-    nip: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String;
+    nip: Schema.Attribute.String;
     regon: Schema.Attribute.String;
   };
 }

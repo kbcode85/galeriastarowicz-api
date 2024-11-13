@@ -382,7 +382,8 @@ export interface ApiPaymentHistoryPaymentHistory
   };
   attributes: {
     amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
-    bankDetails: Schema.Attribute.JSON;
+    bankTransferDetails: Schema.Attribute.JSON;
+    billingAddress: Schema.Attribute.JSON;
     completedAt: Schema.Attribute.DateTime;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -396,6 +397,7 @@ export interface ApiPaymentHistoryPaymentHistory
       'api::payment-history.payment-history'
     > &
       Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON;
     method: Schema.Attribute.Enumeration<['stripe', 'bank_transfer']> &
       Schema.Attribute.Required;
     paymentId: Schema.Attribute.String &
@@ -549,6 +551,7 @@ export interface ApiSubscriptionSubscription
 export interface ApiWebhookWebhook extends Struct.CollectionTypeSchema {
   collectionName: 'webhooks';
   info: {
+    description: 'Webhook endpoints';
     displayName: 'Webhook';
     pluralName: 'webhooks';
     singularName: 'webhook';
@@ -560,17 +563,15 @@ export interface ApiWebhookWebhook extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::webhook.webhook'
     > &
       Schema.Attribute.Private;
-    payload: Schema.Attribute.JSON;
-    processedAt: Schema.Attribute.DateTime;
+    name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    status: Schema.Attribute.String & Schema.Attribute.Required;
-    type: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1044,22 +1045,16 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.Private;
     email: Schema.Attribute.Email &
       Schema.Attribute.Required &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 6;
-      }>;
-    firstName: Schema.Attribute.String & Schema.Attribute.Required;
-    lastName: Schema.Attribute.String & Schema.Attribute.Required;
+      Schema.Attribute.Unique;
+    firstName: Schema.Attribute.String;
+    lastName: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
-    password: Schema.Attribute.Password &
-      Schema.Attribute.Private &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 6;
-      }>;
+    password: Schema.Attribute.Password & Schema.Attribute.Private;
     phone: Schema.Attribute.String;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
@@ -1067,17 +1062,15 @@ export interface PluginUsersPermissionsUser
     role: Schema.Attribute.Relation<
       'manyToOne',
       'plugin::users-permissions.role'
-    >;
+    > &
+      Schema.Attribute.Required;
     shippingAddress: Schema.Attribute.Component<'user.address', false>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     username: Schema.Attribute.String &
       Schema.Attribute.Required &
-      Schema.Attribute.Unique &
-      Schema.Attribute.SetMinMaxLength<{
-        minLength: 3;
-      }>;
+      Schema.Attribute.Unique;
   };
 }
 

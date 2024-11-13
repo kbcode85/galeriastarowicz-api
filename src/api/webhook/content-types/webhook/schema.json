@@ -4,25 +4,18 @@
   "info": {
     "singularName": "webhook",
     "pluralName": "webhooks",
-    "displayName": "Webhook"
+    "displayName": "Webhook",
+    "description": "Webhook endpoints"
   },
   "options": {
     "draftAndPublish": false
   },
   "attributes": {
-    "type": {
-      "type": "string",
-      "required": true
+    "name": {
+      "type": "string"
     },
-    "payload": {
-      "type": "json"
-    },
-    "status": {
-      "type": "string",
-      "required": true
-    },
-    "processedAt": {
-      "type": "datetime"
+    "description": {
+      "type": "text"
     }
   }
 } 

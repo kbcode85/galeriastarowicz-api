@@ -22,14 +22,7 @@ export default ({ env }) => ({
 				expiresIn: '7d',
 			},
 			register: {
-				allowedFields: [
-					'username',
-					'email',
-					'password',
-					'firstName',
-					'lastName',
-					'phone',
-				],
+				allowedFields: ['username', 'email', 'password', 'firstName', 'lastName', 'phone'],
 			},
 		},
 	},
@@ -37,5 +30,35 @@ export default ({ env }) => ({
 		enabled: true,
 		defaultLocale: 'pl',
 		locales: ['pl', 'en'],
+	},
+	documentation: {
+		enabled: true,
+		config: {
+			openapi: '3.0.0',
+			info: {
+				version: '1.0.0',
+				title: 'Subscription API Documentation',
+				description: 'API dokumentacja dla systemu subskrypcji',
+				contact: {
+					name: 'Support Team',
+					email: 'support@example.com',
+					url: 'https://example.com',
+				},
+				license: {
+					name: 'MIT',
+					url: 'https://opensource.org/licenses/MIT',
+				},
+			},
+			'x-strapi-config': {
+				plugins: ['users-permissions'],
+				path: '/documentation',
+			},
+			servers: [
+				{
+					url: 'http://localhost:1337/api',
+					description: 'Development server',
+				},
+			],
+		},
 	},
 })

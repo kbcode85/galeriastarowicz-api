@@ -1,20 +1,13 @@
 import { factories } from '@strapi/strapi'
+import { Context } from 'koa'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: '2024-10-28.acacia',
 })
 
-interface PaymentHistoryData {
-	id: number
-	paymentId: string
-	subscription?: {
-		id: number
-	}
-}
-
 export default factories.createCoreController('api::webhook.webhook', ({ strapi }) => ({
-	async stripe(ctx) {
+	async stripe(ctx: Context) {
 		const signature = ctx.request.headers['stripe-signature']
 
 		try {
@@ -26,10 +19,7 @@ export default factories.createCoreController('api::webhook.webhook', ({ strapi 
 				case 'checkout.session.completed': {
 					const session = event.data.object as Stripe.Checkout.Session
 					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
-						where: {
-							stripeSessionId: session.id,
-							paymentId: session.metadata?.paymentId || session.client_reference_id,
-						},
+						where: { stripeSessionId: session.id },
 						populate: ['subscription'],
 					})
 
@@ -41,13 +31,10 @@ export default factories.createCoreController('api::webhook.webhook', ({ strapi 
 						where: { id: payment.id },
 						data: {
 							paymentStatus: 'completed',
-							stripePaymentId: session.payment_intent as string,
 						},
 					})
 
-					console.log(
-						`Webhook: Updated payment ${payment.paymentId} (${payment.id}) status to completed with payment intent ${session.payment_intent}`
-					)
+					console.log(`Webhook: Updated payment ${payment.id} status to completed`)
 					break
 				}
 
@@ -76,7 +63,7 @@ export default factories.createCoreController('api::webhook.webhook', ({ strapi 
 				case 'payment_intent.payment_failed': {
 					const paymentIntent = event.data.object as Stripe.PaymentIntent
 					const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
-						where: { stripePaymentId: paymentIntent.id },
+						where: { stripeSessionId: paymentIntent.id },
 						populate: ['subscription'],
 					})
 

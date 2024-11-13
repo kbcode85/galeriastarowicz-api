@@ -89,11 +89,12 @@ export default factories.createCoreController('api::subscription.subscription', 
 
 			return {
 				paymentId: payment.paymentId,
+				sessionId: payment.sessionId,
 				status: payment.status,
 				redirectUrl: payment.redirectUrl,
-						bankTransferDetails: payment.bankTransferDetails,
-						amount: price.amount,
-						currency,
+				bankTransferDetails: payment.bankTransferDetails,
+				amount: price.amount,
+				currency,
 			}
 
 		} catch (error) {
@@ -105,7 +106,8 @@ export default factories.createCoreController('api::subscription.subscription', 
 		try {
 			const user = ctx.state.user
 
-			const subscription = await strapi.db
+			// Najpierw sprawdź czy jest aktywna subskrypcja
+			const activeSubscription = await strapi.db
 				.query('api::subscription.subscription')
 				.findOne({
 					where: { 
@@ -126,35 +128,72 @@ export default factories.createCoreController('api::subscription.subscription', 
 					orderBy: { endDate: 'desc' }
 				})
 
-			if (!subscription) {
+			// Jeśli jest aktywna, zwróć ją
+			if (activeSubscription) {
+				const sevenDaysFromNow = new Date()
+				sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
+				const isExpiringSoon = new Date(activeSubscription.endDate) <= sevenDaysFromNow
+
 				return {
-					hasActiveSubscription: false,
-					subscription: null
+					hasActiveSubscription: true,
+					subscription: {
+						id: activeSubscription.id,
+						subscriptionId: activeSubscription.subscriptionId,
+						planName: activeSubscription.plan.name,
+						planLevel: activeSubscription.plan.level,
+						startDate: activeSubscription.startDate,
+						endDate: activeSubscription.endDate,
+						subscriptionDuration: activeSubscription.subscriptionDuration,
+						payment: activeSubscription.payment,
+						status: activeSubscription.subscriptionStatus,
+						isExpiringSoon,
+						daysLeft: Math.ceil(
+							(new Date(activeSubscription.endDate).getTime() - new Date().getTime()) / 
+							(1000 * 60 * 60 * 24)
+						)
+					}
 				}
 			}
 
-			// Sprawdź czy subskrypcja wygasa w ciągu 7 dni
-			const sevenDaysFromNow = new Date()
-			sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7)
-			const isExpiringSoon = new Date(subscription.endDate) <= sevenDaysFromNow
+			// Sprawdź czy jest subskrypcja oczekująca na płatność
+			const pendingSubscription = await strapi.db
+				.query('api::subscription.subscription')
+				.findOne({
+					where: { 
+						user: user.id,
+						subscriptionStatus: 'pending_payment'
+					},
+					populate: {
+						plan: {
+							select: ['name', 'level']
+						},
+						payment: {
+							select: ['paymentId', 'paymentStatus', 'amount', 'currency', 'method']
+						}
+					},
+					orderBy: { createdAt: 'desc' }
+				})
 
-			return {
-				hasActiveSubscription: true,
-				subscription: {
-					id: subscription.id,
-					subscriptionId: subscription.subscriptionId,
-					planName: subscription.plan.name,
-					planLevel: subscription.plan.level,
-					startDate: subscription.startDate,
-					endDate: subscription.endDate,
-					subscriptionDuration: subscription.subscriptionDuration,
-					payment: subscription.payment,
-					isExpiringSoon,
-					daysLeft: Math.ceil(
-						(new Date(subscription.endDate).getTime() - new Date().getTime()) / 
-						(1000 * 60 * 60 * 24)
-					)
+			// Jeśli jest oczekująca, zwróć ją
+			if (pendingSubscription) {
+				return {
+					hasActiveSubscription: false,
+					pendingSubscription: {
+						id: pendingSubscription.id,
+						subscriptionId: pendingSubscription.subscriptionId,
+						planName: pendingSubscription.plan.name,
+						planLevel: pendingSubscription.plan.level,
+						status: pendingSubscription.subscriptionStatus,
+						payment: pendingSubscription.payment,
+						message: 'Subskrypcja oczekuje na potwierdzenie płatności'
+					}
 				}
+			}
+
+			// Jeśli nie ma ani aktywnej, ani oczekującej
+			return {
+				hasActiveSubscription: false,
+				subscription: null
 			}
 
 		} catch (error) {

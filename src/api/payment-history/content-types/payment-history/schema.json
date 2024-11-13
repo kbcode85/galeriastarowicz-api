@@ -56,7 +56,13 @@
 			"relation": "manyToOne",
 			"target": "api::subscription.subscription"
 		},
-		"bankDetails": {
+		"billingAddress": {
+			"type": "json"
+		},
+		"metadata": {
+			"type": "json"
+		},
+		"bankTransferDetails": {
 			"type": "json"
 		},
 		"completedAt": {

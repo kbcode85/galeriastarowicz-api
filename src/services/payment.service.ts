@@ -6,6 +6,7 @@ import {
 	PaymentStatus,
 	SupportedCurrency,
 	BankTransferDetails,
+	PaymentVerificationResponse,
 } from '../types/payment.types'
 import { generateId } from '../utils/generateId'
 
@@ -32,11 +33,41 @@ export const paymentService = {
 		try {
 			const { method } = params
 
+			// Pobierz dane użytkownika z adresem rozliczeniowym
+			const user = await strapi.entityService.findOne('plugin::users-permissions.user', params.userId, {
+				populate: ['billingAddress'],
+			})
+
+			// Przygotuj adres rozliczeniowy jako JSON
+			const billingAddressJson = user.billingAddress
+				? {
+						street: user.billingAddress.street,
+						buildingNumber: user.billingAddress.buildingNumber,
+						apartmentNumber: user.billingAddress.apartmentNumber,
+						city: user.billingAddress.city,
+						postalCode: user.billingAddress.postalCode,
+						voivodeship: user.billingAddress.voivodeship,
+						country: user.billingAddress.country,
+						additionalInfo: user.billingAddress.additionalInfo,
+					}
+				: null
+
+			// Przygotuj metadane
+			const metadata = {
+				userId: params.userId,
+				userDocumentId: user.documentId,
+				userEmail: user.email,
+				subscriptionId: params.subscription,
+				userName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+				userPhone: user.phone || undefined,
+				createdAt: new Date().toISOString(),
+			}
+
 			switch (method) {
 				case 'stripe':
-					return this.handleStripePayment(strapi, params)
+					return this.handleStripePayment(strapi, params, billingAddressJson, metadata)
 				case 'bank_transfer':
-					return this.handleBankTransfer(strapi, params)
+					return this.handleBankTransfer(strapi, params, billingAddressJson, metadata)
 				default:
 					throw new Error('Nieobsługiwana metoda płatności')
 			}
@@ -46,7 +77,12 @@ export const paymentService = {
 		}
 	},
 
-	async handleStripePayment(strapi: any, params: CreatePaymentParams): Promise<PaymentResponse> {
+	async handleStripePayment(
+		strapi: any,
+		params: CreatePaymentParams,
+		billingAddress?: any,
+		metadata?: any
+	): Promise<PaymentResponse> {
 		try {
 			const { amount, currency, userId, successUrl, cancelUrl, subscription } = params
 
@@ -87,6 +123,8 @@ export const paymentService = {
 					paymentStatus: 'pending',
 					user: userId,
 					subscription,
+					billingAddress,
+					metadata,
 				},
 			})
 
@@ -101,41 +139,42 @@ export const paymentService = {
 		}
 	},
 
-	async handleBankTransfer(strapi: any, params: CreatePaymentParams): Promise<PaymentResponse> {
+	async handleBankTransfer(
+		strapi: any,
+		params: CreatePaymentParams,
+		billingAddress?: any,
+		metadata?: any
+	): Promise<PaymentResponse> {
 		try {
 			const { amount, currency, userId, subscription } = params
 			const paymentId = generateId('PAY')
 
-			const bankDetails = {
+			const bankTransferDetails = {
 				accountNumber: process.env.BANK_ACCOUNT_NUMBER!,
 				accountHolder: process.env.BANK_ACCOUNT_HOLDER!,
 				bankName: process.env.BANK_NAME!,
-				transferTitle: `${paymentId}_${userId}`,
+				transferTitle: `${paymentId}`,
 			}
-
-			const data = {
-				paymentId,
-				method: 'bank_transfer' as const,
-				amount,
-				currency,
-				paymentStatus: 'pending' as const,
-				user: userId,
-				subscription,
-				bankDetails,
-			}
-
-			console.log('Attempting to create payment with data:', JSON.stringify(data, null, 2))
 
 			const paymentHistory = await strapi.db.query('api::payment-history.payment-history').create({
-				data,
+				data: {
+					paymentId,
+					method: 'bank_transfer',
+					amount,
+					currency,
+					paymentStatus: 'pending',
+					user: userId,
+					subscription,
+					billingAddress,
+					metadata,
+					bankTransferDetails,
+				},
 			})
-
-			console.log('Created payment history:', JSON.stringify(paymentHistory, null, 2))
 
 			return {
 				paymentId: paymentHistory.paymentId,
 				status: 'pending',
-				bankTransferDetails: bankDetails,
+				bankTransferDetails,
 			}
 		} catch (error) {
 			console.error('Error in handleBankTransfer:', error)
@@ -187,5 +226,81 @@ export const paymentService = {
 		}
 
 		return await this.getPaymentDetails(strapi, paymentId)
+	},
+
+	async verifyPayment(strapi: any, paymentId: string, userId: string): Promise<PaymentVerificationResponse> {
+		try {
+			const payment = await strapi.db.query('api::payment-history.payment-history').findOne({
+				where: {
+					paymentId,
+					user: userId,
+				},
+				populate: ['subscription'],
+			})
+
+			if (!payment) {
+				throw new Error('Payment not found')
+			}
+
+			// Przygotuj wiadomość na podstawie statusów
+			const getSubscriptionMessage = (paymentStatus: PaymentStatus, subscriptionStatus: string) => {
+				if (paymentStatus === 'pending') {
+					return 'Subskrypcja oczekuje na potwierdzenie płatności'
+				}
+				if (paymentStatus === 'completed' && subscriptionStatus === 'active') {
+					return 'Subskrypcja jest aktywna'
+				}
+				if (paymentStatus === 'failed') {
+					return 'Płatność nie powiodła się, subskrypcja nie została aktywowana'
+				}
+				if (paymentStatus === 'refunded') {
+					return 'Płatność została zwrócona, subskrypcja anulowana'
+				}
+				return undefined
+			}
+
+			// Jeśli to płatność Stripe i mamy sessionId, sprawdź jej status w Stripe
+			if (payment.method === 'stripe' && payment.stripeSessionId) {
+				const session = await stripe.checkout.sessions.retrieve(payment.stripeSessionId)
+
+				return {
+					paymentId: payment.paymentId,
+					status: payment.paymentStatus,
+					paymentMethod: session.payment_method_types?.[0],
+					subscription: {
+						id: payment.subscription?.id,
+						subscriptionId: payment.subscription?.subscriptionId,
+						status: payment.subscription?.subscriptionStatus,
+						message: getSubscriptionMessage(payment.paymentStatus, payment.subscription?.subscriptionStatus),
+					},
+					amount: payment.amount,
+					currency: payment.currency,
+					completedAt: payment.completedAt,
+					failedAt: payment.failedAt,
+					refundedAt: payment.refundedAt,
+				}
+			}
+
+			// Dla innych metod płatności zwróć status z bazy
+			return {
+				paymentId: payment.paymentId,
+				status: payment.paymentStatus,
+				paymentMethod: payment.method,
+				subscription: {
+					id: payment.subscription?.id,
+					subscriptionId: payment.subscription?.subscriptionId,
+					status: payment.subscription?.subscriptionStatus,
+					message: getSubscriptionMessage(payment.paymentStatus, payment.subscription?.subscriptionStatus),
+				},
+				amount: payment.amount,
+				currency: payment.currency,
+				completedAt: payment.completedAt,
+				failedAt: payment.failedAt,
+				refundedAt: payment.refundedAt,
+			}
+		} catch (error) {
+			console.error('Error verifying payment:', error)
+			throw error
+		}
 	},
 }
