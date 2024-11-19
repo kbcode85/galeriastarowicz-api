@@ -30,6 +30,7 @@ export default factories.createCoreController('api::webhook.webhook', ({ strapi 
 					await strapi.db.query('api::payment-history.payment-history').update({
 						where: { id: payment.id },
 						data: {
+							stripePaymentId: session.payment_intent as string,
 							paymentStatus: 'completed',
 						},
 					})

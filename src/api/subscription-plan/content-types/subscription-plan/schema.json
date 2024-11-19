@@ -47,7 +47,9 @@
     "level": {
       "type": "enumeration",
       "enum": [
-        "basic"
+        "basic",
+        "premium",
+        "premium_plus"
       ],
       "required": true,
       "pluginOptions": {

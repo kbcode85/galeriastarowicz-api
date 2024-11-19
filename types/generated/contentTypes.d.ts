@@ -462,7 +462,7 @@ export interface ApiSubscriptionPlanSubscriptionPlan
         };
       }> &
       Schema.Attribute.DefaultTo<true>;
-    level: Schema.Attribute.Enumeration<['basic']> &
+    level: Schema.Attribute.Enumeration<['basic', 'premium', 'premium_plus']> &
       Schema.Attribute.Required &
       Schema.Attribute.SetPluginOptions<{
         i18n: {
@@ -563,14 +563,12 @@ export interface ApiWebhookWebhook extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    description: Schema.Attribute.Text;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::webhook.webhook'
     > &
       Schema.Attribute.Private;
-    name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

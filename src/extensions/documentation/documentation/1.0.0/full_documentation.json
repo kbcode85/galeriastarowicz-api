@@ -14,7 +14,7 @@
       "url": "https://opensource.org/licenses/MIT"
     },
     "termsOfService": "YOUR_TERMS_OF_SERVICE_URL",
-    "x-generation-date": "2024-11-13T03:28:19.959Z"
+    "x-generation-date": "2024-11-19T22:59:30.170Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -2547,7 +2547,9 @@
                   "level": {
                     "type": "string",
                     "enum": [
-                      "basic"
+                      "basic",
+                      "premium",
+                      "premium_plus"
                     ]
                   },
                   "prices": {
@@ -3639,7 +3641,9 @@
               "level": {
                 "type": "string",
                 "enum": [
-                  "basic"
+                  "basic",
+                  "premium",
+                  "premium_plus"
                 ]
               },
               "prices": {
@@ -4099,7 +4103,9 @@
           "level": {
             "type": "string",
             "enum": [
-              "basic"
+              "basic",
+              "premium",
+              "premium_plus"
             ]
           },
           "prices": {
@@ -4420,7 +4426,9 @@
                 "level": {
                   "type": "string",
                   "enum": [
-                    "basic"
+                    "basic",
+                    "premium",
+                    "premium_plus"
                   ]
                 },
                 "prices": {
@@ -4505,12 +4513,6 @@
           "data": {
             "type": "object",
             "properties": {
-              "name": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
               "locale": {
                 "type": "string"
               },
@@ -4539,12 +4541,6 @@
             "type": "number"
           },
           "documentId": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "description": {
             "type": "string"
           },
           "createdAt": {
@@ -4845,12 +4841,6 @@
                   "type": "number"
                 },
                 "documentId": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "description": {
                   "type": "string"
                 },
                 "createdAt": {
