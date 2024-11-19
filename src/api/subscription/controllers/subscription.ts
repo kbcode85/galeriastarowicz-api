@@ -53,44 +53,46 @@ export default factories.createCoreController('api::subscription.subscription', 
 				return ctx.badRequest(`Brak aktywnej ceny dla ${currency} i okresu ${duration}`)
 			}
 
-			try {
-				// Utwórz płatność
-				const payment = await paymentService.createPayment(strapi, {
-					amount: price.amount,
-					currency,
-					userId: user.id.toString(),
-					method,
-					successUrl,
-					cancelUrl,
-				})
+			// Utwórz płatność
+			const payment = await paymentService.createPayment(strapi, {
+				amount: price.amount,
+				currency,
+				userId: user.id.toString(),
+				method,
+				successUrl,
+				cancelUrl,
+			})
 
-				// Utwórz subskrypcję w statusie pending
-				const subscription = await strapi.db.query('api::subscription.subscription').create({
-					data: {
-						subscriptionId: generateId('SUB'),
-						user: user.id,
-						plan: planId,
-						subscriptionStatus: 'pending_payment',
-						subscriptionDuration: duration,
-						startDate: new Date(),
-						endDate:
-							duration === 'yearly'
-								? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
-								: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-					},
-				})
+			// Jeśli płatność się udała, utwórz subskrypcję
+			const subscription = await strapi.db.query('api::subscription.subscription').create({
+				data: {
+					subscriptionId: generateId('SUB'),
+					user: user.id,
+					plan: planId,
+					subscriptionStatus: 'pending_payment',
+					subscriptionDuration: duration,
+					startDate: new Date(),
+					endDate:
+						duration === 'yearly'
+							? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+							: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+				},
+			})
 
-				return {
-					paymentId: payment.paymentId,
-					sessionId: payment.sessionId,
-					status: payment.status,
-					redirectUrl: payment.redirectUrl,
-					bankTransferDetails: payment.bankTransferDetails,
-					amount: price.amount,
-					currency,
-				}
-			} catch (error) {
-				ctx.throw(500, error.message)
+			// Aktualizuj płatność o ID subskrypcji
+			await strapi.db.query('api::payment-history.payment-history').update({
+				where: { paymentId: payment.paymentId },
+				data: { subscription: subscription.id }
+			})
+
+			return {
+				paymentId: payment.paymentId,
+				sessionId: payment.sessionId,
+				status: payment.status,
+				redirectUrl: payment.redirectUrl,
+				bankTransferDetails: payment.bankTransferDetails,
+				amount: price.amount,
+				currency,
 			}
 		} catch (error) {
 			ctx.throw(500, error.message)
