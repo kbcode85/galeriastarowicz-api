@@ -4,7 +4,7 @@
 	"private": true,
 	"description": "A Strapi application",
 	"scripts": {
-		"build": "NODE_ENV=production ENV_PATH=.env.productionstrapi build",
+		"build": "NODE_ENV=production ENV_PATH=.env.production strapi build",
 		"develop": "NODE_ENV=development ENV_PATH=.env.development strapi develop",
 		"start": "NODE_ENV=production ENV_PATH=.env.production strapi start",
 		"strapi": "strapi"
