@@ -3,11 +3,11 @@ export default ({ env }) => ({
 		config: {
 			provider: 'nodemailer',
 			providerOptions: {
-				host: process.env.SMTP_HOST,
-				port: process.env.SMTP_PORT,
+				host: env('SMTP_HOST'),
+				port: env.int('SMTP_PORT'),
 				auth: {
-					user: process.env.SMTP_USERNAME,
-					pass: process.env.SMTP_PASSWORD,
+					user: env('SMTP_USERNAME'),
+					pass: env('SMTP_PASSWORD'),
 				},
 			},
 			settings: {
@@ -32,7 +32,7 @@ export default ({ env }) => ({
 		locales: ['pl', 'en'],
 	},
 	documentation: {
-		enabled: true,
+		enabled: false,
 		config: {
 			openapi: '3.0.0',
 			info: {
