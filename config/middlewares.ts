@@ -4,7 +4,7 @@ export default [
 	{
 		name: 'strapi::cors',
 		config: {
-			enabled: true,
+			enabled: false,
 			origin: ['https://demo.galeriastarowicz.pl'],
 			credentials: true,
 			methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
