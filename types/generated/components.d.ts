@@ -1,5 +1,87 @@
 import type { Schema, Struct } from '@strapi/strapi';
 
+export interface ProductAttributes extends Struct.ComponentSchema {
+  collectionName: 'components_product_attributes';
+  info: {
+    description: 'Custom product attributes';
+    displayName: 'Attributes';
+  };
+  attributes: {
+    nameEN: Schema.Attribute.String & Schema.Attribute.Required;
+    namePL: Schema.Attribute.String & Schema.Attribute.Required;
+    type: Schema.Attribute.Enumeration<['text', 'number']> &
+      Schema.Attribute.Required;
+    valueEN: Schema.Attribute.String & Schema.Attribute.Required;
+    valuePL: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ProductPrices extends Struct.ComponentSchema {
+  collectionName: 'components_product_prices';
+  info: {
+    description: 'Product prices in different currencies';
+    displayName: 'Prices';
+  };
+  attributes: {
+    priceEUR: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    pricePLN: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    priceUSD: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+  };
+}
+
+export interface ProductShipping extends Struct.ComponentSchema {
+  collectionName: 'components_product_shipping';
+  info: {
+    description: 'Product shipping options and prices';
+    displayName: 'Shipping';
+  };
+  attributes: {
+    allowCourier: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    allowOwnerDelivery: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    allowParcelLocker: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<true>;
+    allowPickup: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    priceEU: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    priceNonEU: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+  };
+}
+
 export interface SubscriptionPrice extends Struct.ComponentSchema {
   collectionName: 'components_subscription_price';
   info: {
@@ -77,6 +159,9 @@ export interface UserCompany extends Struct.ComponentSchema {
 declare module '@strapi/strapi' {
   export module Public {
     export interface ComponentSchemas {
+      'product.attributes': ProductAttributes;
+      'product.prices': ProductPrices;
+      'product.shipping': ProductShipping;
       'subscription.price': SubscriptionPrice;
       'subscription.user-subscription': SubscriptionUserSubscription;
       'user.address': UserAddress;

@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_product_prices",
+  "info": {
+    "displayName": "Prices",
+    "description": "Product prices in different currencies"
+  },
+  "options": {},
+  "attributes": {
+    "pricePLN": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "priceEUR": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "priceUSD": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  }
+} 

@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_product_attributes",
+  "info": {
+    "displayName": "Attributes",
+    "description": "Custom product attributes"
+  },
+  "options": {},
+  "attributes": {
+    "namePL": {
+      "type": "string",
+      "required": true
+    },
+    "nameEN": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": ["text", "number"],
+      "required": true
+    },
+    "valuePL": {
+      "type": "string",
+      "required": true
+    },
+    "valueEN": {
+      "type": "string",
+      "required": true
+    }
+  }
+} 

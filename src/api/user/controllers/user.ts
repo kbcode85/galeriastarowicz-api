@@ -31,9 +31,14 @@ export default factories.createCoreController('plugin::users-permissions.user', 
 		try {
 			const user = ctx.state.user
 
-			const profile = (await strapi.entityService.findOne('plugin::users-permissions.user', user.id, {
-				populate: ['company', 'billingAddress', 'shippingAddress'],
-			})) as ExtendedUser
+			const profile = await strapi.db.query('plugin::users-permissions.user').findOne({
+				where: { id: user.id },
+				populate: {
+					company: true,
+					billingAddress: true,
+					shippingAddress: true,
+				},
+			})
 
 			return {
 				firstName: profile.firstName || null,
@@ -122,6 +127,26 @@ export default factories.createCoreController('plugin::users-permissions.user', 
 			}
 		} catch (error) {
 			console.error('Error updating user profile:', error)
+			ctx.throw(500, error.message)
+		}
+	},
+
+	async getRole(ctx: Context) {
+		try {
+			const user = ctx.state.user
+
+			const data = await strapi.db.query('plugin::users-permissions.user').findOne({
+				where: { id: user.id },
+				populate: {
+					role: true,
+				},
+			})
+
+			return {
+				role: data.role || null,
+			}
+		} catch (error) {
+			console.error('Error getting user role:', error)
 			ctx.throw(500, error.message)
 		}
 	},

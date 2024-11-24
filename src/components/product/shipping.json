@@ -1,0 +1,36 @@
+{
+  "collectionName": "components_product_shipping",
+  "info": {
+    "displayName": "Shipping",
+    "description": "Product shipping options and prices"
+  },
+  "options": {},
+  "attributes": {
+    "allowCourier": {
+      "type": "boolean",
+      "default": true
+    },
+    "allowParcelLocker": {
+      "type": "boolean",
+      "default": true
+    },
+    "allowPickup": {
+      "type": "boolean",
+      "default": true
+    },
+    "allowOwnerDelivery": {
+      "type": "boolean",
+      "default": false
+    },
+    "priceEU": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    },
+    "priceNonEU": {
+      "type": "decimal",
+      "required": true,
+      "min": 0
+    }
+  }
+} 

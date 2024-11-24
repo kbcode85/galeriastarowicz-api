@@ -30,5 +30,15 @@ export default {
 				},
 			},
 		},
+		{
+			method: 'GET',
+			path: '/users/role',
+			handler: 'user.getRole',
+			config: {
+				auth: {
+					required: true,
+				},
+			},
+		},
 	],
 }

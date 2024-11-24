@@ -1,0 +1,79 @@
+{
+	"kind": "collectionType",
+	"collectionName": "products",
+	"info": {
+		"singularName": "product",
+		"pluralName": "products",
+		"displayName": "Product"
+	},
+	"attributes": {
+		"namePL": {
+			"type": "string",
+			"required": true
+		},
+		"nameEN": {
+			"type": "string",
+			"required": true
+		},
+		"descriptionPL": {
+			"type": "text",
+			"required": true
+		},
+		"descriptionEN": {
+			"type": "text",
+			"required": true
+		},
+		"slug": {
+			"type": "string",
+			"required": true,
+			"unique": true
+		},
+		"thumbnail": {
+			"type": "media",
+			"multiple": false,
+			"required": true
+		},
+		"gallery": {
+			"type": "media",
+			"multiple": true
+		},
+		"categories": {
+			"type": "relation",
+			"relation": "manyToMany",
+			"target": "api::category.category",
+			"inversedBy": "products"
+		},
+		"prices": {
+			"type": "component",
+			"component": "product.prices",
+			"required": true
+		},
+		"shipping": {
+			"type": "component",
+			"component": "product.shipping",
+			"required": true
+		},
+		"attributes": {
+			"type": "component",
+			"component": "product.attributes",
+			"repeatable": true
+		},
+		"quantity": {
+			"type": "integer",
+			"required": true,
+			"min": 0
+		},
+		"isSold": {
+			"type": "boolean",
+			"default": false
+		},
+		"isAvailable": {
+			"type": "boolean",
+			"default": true
+		},
+		"isAuction": {
+			"type": "boolean",
+			"default": false
+		}
+	}
+}
